@@ -94,7 +94,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, isOpen, 
         status,
         priority,
         assigned_to: assignedTo || null,
-        due_date: dueDate || undefined, // Fix: explicitly allow null or undefined properly
+        due_date: dueDate || undefined, 
         checklist
       });
       onUpdate();
@@ -202,11 +202,17 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, isOpen, 
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white shrink-0">
           <div className="flex gap-3">
              <Button 
-                variant={status === 'done' ? 'outline' : 'primary'}
-                className={`transition-all ${status === 'done' ? 'text-green-600 border-green-200 bg-green-50 hover:bg-green-100' : 'bg-white text-slate-700 border-slate-200 hover:border-green-500 hover:text-green-600'}`} 
+                variant="outline"
+                className={`
+                  transition-all font-semibold shadow-sm border-2
+                  ${status === 'done' 
+                    ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' 
+                    : 'bg-white text-slate-700 border-slate-200 hover:border-green-500 hover:text-green-700 hover:bg-green-50'
+                  }
+                `} 
                 onClick={markComplete}
              >
-                <CheckCircle2 className={`h-4 w-4 mr-2 ${status === 'done' ? 'fill-green-600 text-white' : ''}`} /> 
+                <CheckCircle2 className={`h-4 w-4 mr-2 ${status === 'done' ? 'fill-green-600 text-white' : 'text-slate-400 group-hover:text-green-600'}`} /> 
                 {status === 'done' ? 'Completed' : 'Mark Complete'}
              </Button>
           </div>

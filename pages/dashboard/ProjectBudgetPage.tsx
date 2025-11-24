@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { budgetService } from '../../services/budgetService';
 import { projectService } from '../../services/projectService';
 import { ProjectBudget, PostCampaign, CampaignMetric, Project } from '../../types';
-import { Loader2, ArrowLeft, DollarSign, TrendingUp, PieChart, Plus, Play, Pause, Trash2, MousePointer, Target, BarChart2, Eye, Settings, Users, Lightbulb, CheckSquare, Layout, Activity, MessageSquare, Briefcase } from 'lucide-react';
+import { Loader2, ArrowLeft, DollarSign, TrendingUp, PieChart, Plus, Play, Pause, Trash2, MousePointer, Target, BarChart2, Eye, Settings, Users, Lightbulb, CheckSquare, Layout, Activity, MessageSquare, Briefcase, Wallet } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { CreateCampaignModal } from '../../components/budget/CreateCampaignModal';
@@ -262,22 +262,36 @@ export const ProjectBudgetPage: React.FC = () => {
 
             {/* KPI Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              {/* Spend / Budget */}
-              <Card className="relative overflow-hidden border-l-4 border-l-primary-500">
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <p className="text-sm font-medium text-slate-500">Total Spent</p>
-                          <h3 className="text-2xl font-bold text-slate-900 mt-1">${spent.toLocaleString()}</h3>
-                        </div>
-                        <div className="p-2 bg-primary-50 rounded-lg text-primary-600">
-                          <DollarSign className="h-5 w-5" />
-                        </div>
+              {/* Overall Budget Breakdown Card */}
+              <Card className="relative overflow-hidden border-l-4 border-l-primary-500 col-span-1 md:col-span-2 lg:col-span-1">
+                  <CardContent className="p-6 h-full flex flex-col justify-between">
+                    <div className="space-y-4">
+                       <div className="flex justify-between items-start">
+                          <div>
+                             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Budget</p>
+                             <h3 className="text-2xl font-bold text-slate-900">${totalBudget.toLocaleString()}</h3>
+                          </div>
+                          <div className="p-2 bg-primary-50 rounded-lg text-primary-600">
+                             <Wallet className="h-5 w-5" />
+                          </div>
+                       </div>
+                       
+                       <div className="flex justify-between items-end pt-2 border-t border-slate-100">
+                          <div>
+                             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Spent</p>
+                             <p className="text-lg font-bold text-slate-700">${spent.toLocaleString()}</p>
+                          </div>
+                          <div className="text-right">
+                             <p className="text-xs font-medium text-slate-500">Remaining</p>
+                             <p className={`text-sm font-bold ${remaining < 0 ? 'text-red-600' : 'text-green-600'}`}>${remaining.toLocaleString()}</p>
+                          </div>
+                       </div>
                     </div>
-                    <div className="space-y-2">
-                        <div className="flex justify-between text-xs text-slate-500">
-                          <span>{percentUsed.toFixed(1)}% Used</span>
-                          <span>${remaining.toLocaleString()} Remaining</span>
+
+                    <div className="mt-4 space-y-1.5">
+                        <div className="flex justify-between text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                          <span>Utilization</span>
+                          <span>{percentUsed.toFixed(1)}%</span>
                         </div>
                         <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
                           <div className={`h-full transition-all duration-500 ${percentUsed > 90 ? 'bg-red-500' : percentUsed > 75 ? 'bg-orange-500' : 'bg-primary-500'}`} style={{ width: `${Math.min(percentUsed, 100)}%` }} />
@@ -288,7 +302,7 @@ export const ProjectBudgetPage: React.FC = () => {
 
               {/* Impressions / Clicks */}
               <Card className="border-l-4 border-l-purple-500">
-                  <CardContent className="p-6">
+                  <CardContent className="p-6 h-full flex flex-col justify-between">
                     <div className="flex justify-between items-start mb-2">
                         <div>
                           <p className="text-sm font-medium text-slate-500">Impressions</p>
@@ -310,7 +324,7 @@ export const ProjectBudgetPage: React.FC = () => {
 
               {/* Efficiency (CPC / CTR) */}
               <Card className="border-l-4 border-l-blue-500">
-                  <CardContent className="p-6">
+                  <CardContent className="p-6 h-full flex flex-col justify-between">
                     <div className="flex justify-between items-start mb-2">
                         <div>
                           <p className="text-sm font-medium text-slate-500">Avg. CTR</p>
@@ -331,7 +345,7 @@ export const ProjectBudgetPage: React.FC = () => {
 
               {/* ROAS */}
               <Card className="border-l-4 border-l-green-500">
-                  <CardContent className="p-6">
+                  <CardContent className="p-6 h-full flex flex-col justify-between">
                     <div className="flex justify-between items-start mb-2">
                         <div>
                           <p className="text-sm font-medium text-slate-500">Total ROAS</p>
