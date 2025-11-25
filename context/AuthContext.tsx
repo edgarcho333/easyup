@@ -29,22 +29,17 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
 
   // Load session from Supabase on mount
   useEffect(() => {
-    console.log('🔵 [AuthContext] Initializing auth listener...');
     let isInitialLoad = true;
 
     // Listen for auth state changes (this handles initial session load too)
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔵 [AuthContext] Auth state changed:', event);
-
       // Handle INITIAL_SESSION (on page load/refresh)
       if (event === 'INITIAL_SESSION') {
         isInitialLoad = false;
         if (session?.user) {
-          console.log('✅ [AuthContext] Initial session exists, building user...');
           try {
             const currentUser = await authService.getCurrentUser();
             if (currentUser) {
-              console.log('✅ [AuthContext] User built successfully');
               setState({
                 user: currentUser,
                 isAuthenticated: true,
@@ -54,22 +49,19 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
               setState({ user: null, isAuthenticated: false, isLoading: false });
             }
           } catch (error) {
-            console.error('❌ [AuthContext] Error building user:', error);
+            console.error('Failed to load user session:', error);
             setState({ user: null, isAuthenticated: false, isLoading: false });
           }
         } else {
-          console.log('⚠️ [AuthContext] No initial session');
           setState({ user: null, isAuthenticated: false, isLoading: false });
         }
       }
       // Handle SIGNED_IN (after login/register, but NOT on initial load)
       else if (event === 'SIGNED_IN' && !isInitialLoad) {
         if (session?.user) {
-          console.log('✅ [AuthContext] User signed in, building user...');
           try {
             const currentUser = await authService.getCurrentUser();
             if (currentUser) {
-              console.log('✅ [AuthContext] User built successfully after sign in');
               setState({
                 user: currentUser,
                 isAuthenticated: true,
@@ -77,14 +69,13 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
               });
             }
           } catch (error) {
-            console.error('❌ [AuthContext] Error building user after sign in:', error);
+            console.error('Failed to load user after sign in:', error);
             setState({ user: null, isAuthenticated: false, isLoading: false });
           }
         }
       }
       // Handle SIGNED_OUT
       else if (event === 'SIGNED_OUT') {
-        console.log('⚠️ [AuthContext] User signed out');
         setState({ user: null, isAuthenticated: false, isLoading: false });
       }
     });

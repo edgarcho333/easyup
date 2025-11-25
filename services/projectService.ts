@@ -1,35 +1,133 @@
-
-import { mockDb } from '../lib/mockDb';
+import { supabase } from '../lib/supabase';
 import { Project, ProjectMember, ProjectStatus } from '../types';
 import { notificationService } from './notificationService';
 
 export const projectService = {
   async getProjects(organizationId: string, statusFilter?: ProjectStatus): Promise<Project[]> {
-    let projects = mockDb.filter('projects', (p: any) => p.organization_id === organizationId);
+    try {
+      let query = supabase
+        .from('projects')
+        .select('*')
+        .eq('organization_id', organizationId);
 
-    if (statusFilter) {
-      projects = projects.filter((p: any) => p.status === statusFilter);
+      if (statusFilter) {
+        query = query.eq('status', statusFilter);
+      }
+
+      const { data: projects, error } = await query.order('updated_at', { ascending: false });
+
+      if (error) {
+        console.error('Failed to fetch projects:', error.message);
+        throw new Error(`Failed to fetch projects: ${error.message}`);
+      }
+
+      if (!projects) return [];
+
+      // Fetch members for each project
+      const projectsWithMembers = await Promise.all(
+        projects.map(async (project) => {
+          const { data: members, error: membersError } = await supabase
+            .from('project_members')
+            .select(`
+              *,
+              users:user_id (
+                id,
+                email,
+                full_name,
+                avatar_url
+              ),
+              roles:role_id (
+                id,
+                name,
+                display_name
+              )
+            `)
+            .eq('project_id', project.id);
+
+          if (membersError) {
+            console.error('Failed to fetch project members:', membersError.message);
+            return { ...project, members: [] };
+          }
+
+          const formattedMembers = members?.map((m: any) => ({
+            id: m.id,
+            project_id: m.project_id,
+            user_id: m.user_id,
+            role_id: m.role_id,
+            is_lead: m.is_lead,
+            added_at: m.added_at,
+            user: m.users,
+            role: m.roles
+          })) || [];
+
+          return { ...project, members: formattedMembers };
+        })
+      );
+
+      return projectsWithMembers;
+    } catch (err) {
+      console.error('Error in getProjects:', err);
+      throw err;
     }
-
-    // Attach members
-    return projects.map((p: any) => {
-      const members = mockDb.filter('project_members', (pm: any) => pm.project_id === p.id);
-      return { ...p, members };
-    }).sort((a: any, b: any) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
   },
 
   async getProject(projectId: string): Promise<Project> {
-    const project: any = mockDb.find('projects', (p: any) => p.id === projectId);
-    if (!project) throw new Error("Project not found");
+    try {
+      const { data: project, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', projectId)
+        .single();
 
-    const members = mockDb.filter('project_members', (pm: any) => pm.project_id === projectId);
-    const membersWithDetails = members.map((m: any) => {
-        const user = mockDb.find('users', (u: any) => u.id === m.user_id);
-        const role = mockDb.find('roles', (r: any) => r.id === m.role_id);
-        return { ...m, user, role };
-    });
+      if (error) {
+        console.error('Failed to fetch project:', error.message);
+        throw new Error('Project not found');
+      }
 
-    return { ...project, members: membersWithDetails };
+      if (!project) {
+        throw new Error('Project not found');
+      }
+
+      // Fetch project members with user and role details
+      const { data: members, error: membersError } = await supabase
+        .from('project_members')
+        .select(`
+          *,
+          users:user_id (
+            id,
+            email,
+            full_name,
+            avatar_url
+          ),
+          roles:role_id (
+            id,
+            name,
+            display_name
+          )
+        `)
+        .eq('project_id', projectId);
+
+      if (membersError) {
+        console.error('Failed to fetch project members:', membersError.message);
+        return { ...project, members: [] };
+      }
+
+      const formattedMembers = members?.map((m: any) => ({
+        id: m.id,
+        project_id: m.project_id,
+        user_id: m.user_id,
+        role_id: m.role_id,
+        is_lead: m.is_lead,
+        added_at: m.added_at,
+        user: m.users,
+        role: m.roles
+      })) || [];
+
+      return { ...project, members: formattedMembers };
+    } catch (err) {
+      console.error('Error in getProject:', err);
+      throw err;
+    }
   },
 
   async createProject(
@@ -45,51 +143,107 @@ export const projectService = {
     assignedMembers: { userId: string; roleId: string }[],
     clientInvite?: { email: string; name: string }
   ): Promise<string> {
-    
-    const project = mockDb.insert<Project>('projects', {
-      organization_id: organizationId,
-      created_by: creatorId,
-      name: projectData.name,
-      client_name: projectData.client_name,
-      description: projectData.description,
-      monthly_post_target: projectData.monthly_post_target || 8,
-      total_budget: projectData.total_budget,
-      status: 'setup'
-    });
+    try {
+      // Create project
+      const { data: project, error: projectError } = await supabase
+        .from('projects')
+        .insert({
+          organization_id: organizationId,
+          created_by: creatorId,
+          name: projectData.name,
+          client_name: projectData.client_name,
+          description: projectData.description,
+          monthly_post_target: projectData.monthly_post_target || 8,
+          total_budget: projectData.total_budget,
+          status: 'setup'
+        })
+        .select()
+        .single();
 
-    assignedMembers.forEach(m => {
-      mockDb.insert('project_members', {
-        project_id: project.id,
-        user_id: m.userId,
-        role_id: m.roleId,
-        added_by: creatorId
-      });
-    });
+      if (projectError) {
+        console.error('Failed to create project:', projectError.message);
+        throw new Error(`Failed to create project: ${projectError.message}`);
+      }
 
-    // --- NOTIFICATION TRIGGER ---
-    // Notify creator (acting as Admin) about new project creation
-    const creator = mockDb.find('users', (u: any) => u.id === creatorId);
-    await notificationService.createNotification({
+      if (!project) {
+        throw new Error('No project returned from insert');
+      }
+
+      // Add project members
+      if (assignedMembers.length > 0) {
+        const membersToInsert = assignedMembers.map(m => ({
+          project_id: project.id,
+          user_id: m.userId,
+          role_id: m.roleId,
+          added_by: creatorId
+        }));
+
+        const { error: membersError } = await supabase
+          .from('project_members')
+          .insert(membersToInsert);
+
+        if (membersError) {
+          console.error('Failed to add project members:', membersError.message);
+          // Don't throw, project was created successfully
+        }
+      }
+
+      // --- NOTIFICATION TRIGGER ---
+      // Get creator details for notification
+      const { data: userData } = await supabase.auth.getUser();
+      const fullName = userData?.user?.user_metadata?.full_name || 'Someone';
+
+      await notificationService.createNotification({
         user_id: creatorId,
         organization_id: organizationId,
         type: 'project_created',
         title: 'New Project Created',
-        message: `${creator?.full_name} created a new project: ${projectData.name} for ${projectData.client_name}`,
+        message: `${fullName} created a new project: ${projectData.name} for ${projectData.client_name}`,
         sender_id: 'system',
         link_url: `/projects/${project.id}`
-    });
+      });
 
-    return project.id;
+      return project.id;
+    } catch (err) {
+      console.error('Error in createProject:', err);
+      throw err;
+    }
   },
 
   async updateProject(projectId: string, updates: Partial<Project>): Promise<void> {
-    mockDb.update('projects', projectId, updates);
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update(updates)
+        .eq('id', projectId);
+
+      if (error) {
+        console.error('Failed to update project:', error.message);
+        throw new Error(`Failed to update project: ${error.message}`);
+      }
+    } catch (err) {
+      console.error('Error in updateProject:', err);
+      throw err;
+    }
   },
 
   async archiveProject(projectId: string): Promise<void> {
-    mockDb.update('projects', projectId, { 
-      status: 'archived', 
-      archived_at: new Date().toISOString() 
-    });
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({
+          status: 'archived',
+          archived_at: new Date().toISOString()
+        })
+        .eq('id', projectId);
+
+      if (error) {
+        console.error('Failed to archive project:', error.message);
+        throw new Error(`Failed to archive project: ${error.message}`);
+      }
+    } catch (err) {
+      console.error('Error in archiveProject:', err);
+      throw err;
+    }
   }
 };

@@ -30,11 +30,9 @@ export interface Database {
           updated_at?: string
         }
         Update: {
-          id?: string
           email?: string
           full_name?: string | null
           avatar_url?: string | null
-          created_at?: string
           updated_at?: string
         }
       }
@@ -102,6 +100,82 @@ export interface Database {
           id?: string
           name?: string
           display_name?: string
+        }
+      }
+      projects: {
+        Row: {
+          id: string
+          organization_id: string
+          name: string
+          description: string | null
+          client_name: string
+          status: string
+          monthly_post_target: number
+          total_budget: number | null
+          settings: Json
+          created_by: string
+          created_at: string
+          updated_at: string
+          archived_at: string | null
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          name: string
+          description?: string | null
+          client_name: string
+          status?: string
+          monthly_post_target?: number
+          total_budget?: number | null
+          settings?: Json
+          created_by: string
+          created_at?: string
+          updated_at?: string
+          archived_at?: string | null
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          name?: string
+          description?: string | null
+          client_name?: string
+          status?: string
+          monthly_post_target?: number
+          total_budget?: number | null
+          settings?: Json
+          created_by?: string
+          created_at?: string
+          updated_at?: string
+          archived_at?: string | null
+        }
+      }
+      project_members: {
+        Row: {
+          id: string
+          project_id: string
+          user_id: string
+          role_id: string
+          is_lead: boolean
+          added_by: string | null
+          added_at: string
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          user_id: string
+          role_id: string
+          is_lead?: boolean
+          added_by?: string | null
+          added_at?: string
+        }
+        Update: {
+          id?: string
+          project_id?: string
+          user_id?: string
+          role_id?: string
+          is_lead?: boolean
+          added_by?: string | null
+          added_at?: string
         }
       }
     }
