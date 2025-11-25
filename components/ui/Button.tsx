@@ -1,3 +1,4 @@
+
 import React, { ButtonHTMLAttributes } from 'react';
 import { Loader2 } from 'lucide-react';
 
@@ -16,14 +17,14 @@ export const Button: React.FC<ButtonProps> = ({
   disabled, 
   ...props 
 }) => {
-  const baseStyles = "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:opacity-50 disabled:pointer-events-none ring-offset-background";
+  const baseStyles = "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:opacity-50 disabled:pointer-events-none ring-offset-background dark:ring-offset-slate-900";
   
   const variants = {
-    primary: "bg-primary-600 text-white hover:bg-primary-700 shadow-sm",
-    secondary: "bg-slate-100 text-slate-900 hover:bg-slate-200",
-    outline: "border border-slate-200 hover:bg-slate-100 hover:text-slate-900 bg-transparent text-slate-900",
-    ghost: "hover:bg-slate-100 hover:text-slate-900 text-slate-600",
-    destructive: "bg-red-500 text-white hover:bg-red-600",
+    primary: "bg-primary-600 text-white hover:bg-primary-700 shadow-sm dark:bg-primary-500 dark:hover:bg-primary-600 dark:text-white",
+    secondary: "bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-50 dark:hover:bg-slate-700",
+    outline: "border border-slate-200 hover:bg-slate-100 hover:text-slate-900 bg-transparent text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-slate-50",
+    ghost: "hover:bg-slate-100 hover:text-slate-900 text-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-50",
+    destructive: "bg-red-500 text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 dark:text-white",
   };
 
   const sizes = {

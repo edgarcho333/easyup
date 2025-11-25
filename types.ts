@@ -1,4 +1,5 @@
 
+
 export type UserRoleName = 
   | 'super_admin' 
   | 'account_manager' 
@@ -95,6 +96,7 @@ export interface ProjectSettings {
     email_on_new_idea: boolean;
     email_on_approval: boolean;
     email_on_comment: boolean;
+    email_on_task_due: boolean;
   };
 }
 
@@ -201,6 +203,20 @@ export interface IdeaAsset {
   uploader?: User;
 }
 
+export interface AssetAnnotation {
+  id: string;
+  asset_id: string;
+  user_id: string;
+  x: number; // Percentage 0-100
+  y: number; // Percentage 0-100
+  comment: string;
+  created_at: string;
+  is_resolved: boolean;
+  
+  // Virtual
+  user?: User;
+}
+
 export interface AssetReview {
   id: string;
   asset_id: string;
@@ -248,17 +264,132 @@ export interface Task {
   description?: string;
   status: TaskStatus;
   priority: TaskPriority;
-  assigned_to?: string;
-  due_date?: string;
+  
+  // Updated to array
+  assigned_to?: string[]; 
+  
+  // Timeline fields
+  start_date?: string; // ISO String
+  due_date?: string; // ISO String
+  dependencies?: string[]; // Array of Task IDs that must complete before this one
+  
+  // Workload fields
+  effort?: number;
+  effort_unit?: 'hours' | 'points';
+
   checklist?: TaskChecklistItem[];
   created_by: string;
   created_at: string;
   updated_at?: string;
-  assignee?: User;
+  
+  // Updated Virtual
+  assignees?: User[]; 
+  
   creator?: User;
+  project?: Project;
+}
+
+// --- TIME TRACKING ---
+export interface TimeLog {
+  id: string;
+  user_id: string;
+  organization_id: string;
+  project_id?: string;
+  task_id?: string;
+  start_time: string;
+  end_time?: string;
+  duration_minutes: number; // 0 if currently running
+  description?: string;
+  created_at: string;
   
   // Virtual
+  user?: User;
   project?: Project;
+  task?: Task;
+}
+
+// --- EMPLOYEE ANALYTICS ---
+export interface EmployeePerformanceMetrics {
+  user_id: string;
+  user_name: string;
+  user_avatar?: string;
+  user_role: string;
+  
+  // Discipline
+  attendance_score: number; // 0-100
+  lateness_count: number; // Number of times late this month
+  avg_lateness_minutes: number; 
+  
+  // Activity
+  current_status: 'working' | 'idle' | 'offline';
+  current_task?: string;
+  current_project?: string;
+  total_hours_today: number;
+  
+  // Delivery
+  tasks_completed_on_time: number;
+  tasks_overdue: number;
+  task_efficiency_rate: number; // % on time
+  active_task_count?: number; // NEW for load matrix
+  
+  // Communication
+  avg_chat_response_time_minutes: number;
+  missed_messages_count: number;
+}
+
+export interface VelocityMetric {
+  sprint_name: string;
+  planned_points: number;
+  completed_points: number;
+}
+
+export interface WorkloadDistribution {
+  status: TaskStatus;
+  count: number;
+}
+
+// --- WORKFLOW AUTOMATION ---
+export type WorkflowTriggerType = 'status_change' | 'priority_change' | 'task_created';
+export type WorkflowActionType = 'assign_user' | 'change_status' | 'post_comment';
+
+export interface Workflow {
+  id: string;
+  project_id: string;
+  name: string;
+  is_enabled: boolean;
+  trigger_type: WorkflowTriggerType;
+  trigger_value?: string; // e.g. 'high' for priority, or 'done' for status
+  action_type: WorkflowActionType;
+  action_value: string; // e.g. user_id for assign, status string for change_status
+  created_by: string;
+  created_at: string;
+}
+
+// --- NOTIFICATIONS ---
+export type NotificationType = 
+  | 'task_assigned' 
+  | 'idea_approved' 
+  | 'comment_added' 
+  | 'mention' 
+  | 'system'
+  | 'task_due_soon'
+  | 'task_overdue'
+  | 'timer_started'
+  | 'project_created';
+
+export interface Notification {
+  id: string;
+  user_id: string; // Who receives it
+  organization_id: string;
+  project_id?: string; // Added for project-specific filtering
+  type: NotificationType;
+  title: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+  link_url?: string; // Where it takes you
+  sender_id?: string; // Who triggered it
+  sender?: User; // Virtual
 }
 
 export interface ProjectBudget {
@@ -313,6 +444,9 @@ export interface Message {
   conversation_id: string;
   user_id: string;
   content: string;
+  attachment_url?: string;
+  attachment_name?: string;
+  attachment_type?: string; // 'image' | 'file'
   created_at: string;
   user?: User;
 }

@@ -71,20 +71,20 @@ export const ProjectsPage: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch(status) {
-      case 'active': return 'bg-green-100 text-green-700';
-      case 'setup': return 'bg-yellow-100 text-yellow-700';
-      case 'completed': return 'bg-blue-100 text-blue-700';
-      default: return 'bg-slate-100 text-slate-600';
+      case 'active': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+      case 'setup': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
+      case 'completed': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+      default: return 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
     }
   };
 
   // If no organization, show a helpful empty state
   if (!user?.currentOrganization && !isLoading) {
     return (
-      <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-300">
-        <Folder className="h-12 w-12 mx-auto text-slate-300 mb-3" />
-        <h3 className="text-lg font-medium text-slate-900">No Organization Selected</h3>
-        <p className="text-slate-500 mb-4">Please select or create an organization from the sidebar to view projects.</p>
+      <div className="text-center py-12 bg-slate-50 dark:bg-slate-900 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+        <Folder className="h-12 w-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-200">No Organization Selected</h3>
+        <p className="text-slate-500 dark:text-slate-400 mb-4">Please select or create an organization from the sidebar to view projects.</p>
       </div>
     );
   }
@@ -93,8 +93,8 @@ export const ProjectsPage: React.FC = () => {
     <div className="space-y-6 h-full flex flex-col">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Projects</h1>
-          <p className="text-slate-500 mt-1">Manage your client campaigns and content.</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Projects</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Manage your client campaigns and content.</p>
         </div>
         {(user?.currentRole === 'super_admin' || user?.currentRole === 'account_manager') && (
           <Button onClick={() => setIsCreateModalOpen(true)} disabled={!!error}>
@@ -104,12 +104,12 @@ export const ProjectsPage: React.FC = () => {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3 animate-in fade-in">
-           <AlertTriangle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start gap-3 animate-in fade-in">
+           <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
            <div>
-             <h3 className="font-bold text-red-800">Error Loading Projects</h3>
-             <p className="text-sm text-red-700 mt-1">{error}</p>
-             <Button variant="outline" size="sm" onClick={fetchProjects} className="mt-2 border-red-200 hover:bg-red-100 text-red-800">Retry</Button>
+             <h3 className="font-bold text-red-800 dark:text-red-300">Error Loading Projects</h3>
+             <p className="text-sm text-red-700 dark:text-red-400 mt-1">{error}</p>
+             <Button variant="outline" size="sm" onClick={fetchProjects} className="mt-2 border-red-200 hover:bg-red-100 text-red-800 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-200 dark:border-red-800">Retry</Button>
            </div>
         </div>
       )}
@@ -119,11 +119,11 @@ export const ProjectsPage: React.FC = () => {
       ) : !error && (
         <>
           {/* Filters & Controls */}
-          <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div className="flex flex-col sm:flex-row gap-4 bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input 
-                className="pl-9 border-slate-200" 
+                className="pl-9 border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white" 
                 placeholder="Search projects or clients..." 
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
@@ -132,7 +132,7 @@ export const ProjectsPage: React.FC = () => {
             <div className="flex gap-2">
               <div className="relative">
                 <select 
-                    className="h-10 pl-9 pr-4 rounded-md border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer"
+                    className="h-10 pl-9 pr-4 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer"
                     value={statusFilter}
                     onChange={e => setStatusFilter(e.target.value)}
                 >
@@ -144,16 +144,16 @@ export const ProjectsPage: React.FC = () => {
                 </select>
                 <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
               </div>
-              <div className="border-l border-slate-200 pl-2 flex gap-1">
+              <div className="border-l border-slate-200 dark:border-slate-700 pl-2 flex gap-1">
                 <button 
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                 >
                   <LayoutGrid className="h-5 w-5" />
                 </button>
                 <button 
                   onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                 >
                   <List className="h-5 w-5" />
                 </button>
@@ -168,27 +168,27 @@ export const ProjectsPage: React.FC = () => {
                 <Link 
                   key={project.id} 
                   to={`/projects/${project.id}`}
-                  className="group bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-primary-200 transition-all p-6 flex flex-col h-full"
+                  className="group bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-primary-200 dark:hover:border-primary-700 transition-all p-6 flex flex-col h-full"
                 >
                   <div className="flex justify-between items-start mb-4">
-                    <div className="bg-primary-50 p-3 rounded-lg group-hover:bg-primary-100 transition-colors">
-                      <Folder className="h-6 w-6 text-primary-600" />
+                    <div className="bg-primary-50 dark:bg-primary-900/20 p-3 rounded-lg group-hover:bg-primary-100 dark:group-hover:bg-primary-900/40 transition-colors">
+                      <Folder className="h-6 w-6 text-primary-600 dark:text-primary-400" />
                     </div>
                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(project.status)}`}>
                       {project.status.replace('_', ' ')}
                     </span>
                   </div>
                   
-                  <h3 className="text-lg font-bold text-slate-900 mb-1 truncate">{project.name}</h3>
-                  <p className="text-sm text-slate-500 font-medium mb-4">{project.client_name}</p>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1 truncate">{project.name}</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-4">{project.client_name}</p>
                   
                   {project.description && (
-                    <p className="text-sm text-slate-600 line-clamp-2 mb-6 flex-1">
+                    <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2 mb-6 flex-1">
                       {project.description}
                     </p>
                   )}
                   
-                  <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500">
+                  <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
                     <div className="flex items-center gap-1">
                       <Users className="h-4 w-4" />
                       <span>{project.members?.length || 0} Team</span>
@@ -201,10 +201,10 @@ export const ProjectsPage: React.FC = () => {
                 </Link>
               ))}
               {filteredProjects.length === 0 && (
-                <div className="col-span-full text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-300">
-                  <Folder className="h-12 w-12 mx-auto text-slate-300 mb-3" />
-                  <h3 className="text-lg font-medium text-slate-900">No projects found</h3>
-                  <p className="text-slate-500">Try adjusting your filters or create a new one.</p>
+                <div className="col-span-full text-center py-12 bg-slate-50 dark:bg-slate-900 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+                  <Folder className="h-12 w-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+                  <h3 className="text-lg font-medium text-slate-900 dark:text-slate-200">No projects found</h3>
+                  <p className="text-slate-500 dark:text-slate-400">Try adjusting your filters or create a new one.</p>
                 </div>
               )}
             </div>
@@ -212,38 +212,38 @@ export const ProjectsPage: React.FC = () => {
 
           {/* List View */}
           {viewMode === 'list' && (
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
               <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
                   <tr>
-                    <th className="px-6 py-4 font-semibold text-slate-700">Project Name</th>
-                    <th className="px-6 py-4 font-semibold text-slate-700">Client</th>
-                    <th className="px-6 py-4 font-semibold text-slate-700">Status</th>
-                    <th className="px-6 py-4 font-semibold text-slate-700">Team Size</th>
-                    <th className="px-6 py-4 font-semibold text-slate-700">Last Update</th>
+                    <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Project Name</th>
+                    <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Client</th>
+                    <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Status</th>
+                    <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Team Size</th>
+                    <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Last Update</th>
                     <th className="px-6 py-4 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                   {filteredProjects.map(project => (
-                    <tr key={project.id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => navigate(`/projects/${project.id}`)}>
-                      <td className="px-6 py-4 font-medium text-slate-900">{project.name}</td>
-                      <td className="px-6 py-4 text-slate-600">{project.client_name}</td>
+                    <tr key={project.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer" onClick={() => navigate(`/projects/${project.id}`)}>
+                      <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{project.name}</td>
+                      <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{project.client_name}</td>
                       <td className="px-6 py-4">
                         <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(project.status)}`}>
                             {project.status.replace('_', ' ')}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-slate-600">{project.members?.length || 0}</td>
-                      <td className="px-6 py-4 text-slate-600">{new Date(project.updated_at || project.created_at).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{project.members?.length || 0}</td>
+                      <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{new Date(project.updated_at || project.created_at).toLocaleDateString()}</td>
                       <td className="px-6 py-4 text-right">
-                          <Button variant="ghost" size="sm"><MoreVertical className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="sm" className="dark:text-slate-400 dark:hover:text-slate-200"><MoreVertical className="h-4 w-4" /></Button>
                       </td>
                     </tr>
                   ))}
                   {filteredProjects.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-slate-500">No projects found</td>
+                      <td colSpan={6} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">No projects found</td>
                     </tr>
                   )}
                 </tbody>

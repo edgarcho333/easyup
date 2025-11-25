@@ -81,10 +81,10 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, on
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b border-slate-100">
-          <h3 className="text-lg font-semibold text-slate-900">Invite Team Member</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-500">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 dark:border-slate-800">
+        <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Invite Team Member</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-500 dark:hover:text-slate-300">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -92,12 +92,12 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, on
         <div className="p-6">
           {isSuccessStep ? (
             <div className="text-center py-4 space-y-4">
-              <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="h-8 w-8 text-green-600" />
+              <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <h4 className="text-xl font-bold text-slate-900">Invitation Sent!</h4>
-                <p className="text-slate-500 mt-2">
+                <h4 className="text-xl font-bold text-slate-900 dark:text-white">Invitation Sent!</h4>
+                <p className="text-slate-500 dark:text-slate-400 mt-2">
                    We've sent an invitation to <strong>{email}</strong>.
                 </p>
                 <p className="text-sm text-slate-400 mt-2">
@@ -109,14 +109,14 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, on
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
               {error && (
-                <div className="p-3 rounded-md bg-red-50 text-red-600 text-sm border border-red-100 flex items-start gap-2">
+                <div className="p-3 rounded-md bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm border border-red-100 dark:border-red-800 flex items-start gap-2">
                    <X className="h-4 w-4 mt-0.5 shrink-0" />
                    <span>{error}</span>
                 </div>
               )}
               
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">Email Address <span className="text-red-500">*</span></label>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Email Address <span className="text-red-500">*</span></label>
                 <Input
                   type="email"
                   placeholder="colleague@company.com"
@@ -124,14 +124,15 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, on
                   onChange={e => setEmail(e.target.value)}
                   required
                   autoFocus
+                  className="dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                 />
-                <p className="text-xs text-slate-500">User will be auto-added when they register</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">User will be auto-added when they register</p>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">Role <span className="text-red-500">*</span></label>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Role <span className="text-red-500">*</span></label>
                 <select
-                  className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="flex h-10 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                   value={selectedRole}
                   onChange={e => setSelectedRole(e.target.value)}
                   required
@@ -143,9 +144,9 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, on
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">Message <span className="text-slate-400 font-normal">(Optional)</span></label>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Message <span className="text-slate-400 font-normal">(Optional)</span></label>
                 <textarea
-                  className="flex min-h-[80px] w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none placeholder:text-slate-400"
+                  className="flex min-h-[80px] w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none placeholder:text-slate-400"
                   placeholder="Welcome to the team..."
                   value={personalMessage}
                   onChange={e => setPersonalMessage(e.target.value)}
@@ -153,7 +154,7 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, on
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
-                <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
+                <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting} className="dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800">Cancel</Button>
                 <Button type="submit" isLoading={isSubmitting}>
                   <Send className="h-4 w-4 mr-2" /> Send Invitation
                 </Button>

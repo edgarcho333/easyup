@@ -95,22 +95,22 @@ export const ContentCalendar: React.FC<ContentCalendarProps> = ({ ideas, onIdeaC
 
   const getPlatformIcon = (platform: Platform) => {
     switch (platform) {
-      case 'facebook': return <Facebook className="h-3.5 w-3.5 text-blue-600" />;
-      case 'instagram': return <Instagram className="h-3.5 w-3.5 text-pink-600" />;
-      case 'linkedin': return <Linkedin className="h-3.5 w-3.5 text-sky-700" />;
-      case 'twitter': return <Twitter className="h-3.5 w-3.5 text-sky-500" />;
-      case 'tiktok': return <Video className="h-3.5 w-3.5 text-slate-900" />;
-      default: return <ImageIcon className="h-3.5 w-3.5 text-slate-500" />;
+      case 'facebook': return <Facebook className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />;
+      case 'instagram': return <Instagram className="h-3.5 w-3.5 text-pink-600 dark:text-pink-400" />;
+      case 'linkedin': return <Linkedin className="h-3.5 w-3.5 text-sky-700 dark:text-sky-400" />;
+      case 'twitter': return <Twitter className="h-3.5 w-3.5 text-sky-500 dark:text-sky-300" />;
+      case 'tiktok': return <Video className="h-3.5 w-3.5 text-slate-900 dark:text-slate-100" />;
+      default: return <ImageIcon className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />;
     }
   };
 
   const getPlatformGradient = (platform: Platform) => {
     switch (platform) {
-      case 'facebook': return 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200';
-      case 'instagram': return 'bg-gradient-to-br from-pink-50 to-orange-50 border-pink-200';
-      case 'linkedin': return 'bg-gradient-to-br from-sky-50 to-blue-50 border-sky-200';
-      case 'tiktok': return 'bg-gradient-to-br from-slate-100 to-slate-200 border-slate-300';
-      default: return 'bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200';
+      case 'facebook': return 'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-blue-200 dark:border-blue-800';
+      case 'instagram': return 'bg-gradient-to-br from-pink-50 to-orange-50 dark:from-pink-900/30 dark:to-orange-900/30 border-pink-200 dark:border-pink-800';
+      case 'linkedin': return 'bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-900/30 dark:to-blue-900/30 border-sky-200 dark:border-sky-800';
+      case 'tiktok': return 'bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 border-slate-300 dark:border-slate-600';
+      default: return 'bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-slate-200 dark:border-slate-700';
     }
   };
 
@@ -127,44 +127,44 @@ export const ContentCalendar: React.FC<ContentCalendarProps> = ({ ideas, onIdeaC
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-180px)] min-h-[600px]">
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-180px)] min-h-[600px]">
       {/* Calendar Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 border-b border-slate-200 gap-4 bg-white relative z-20">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700 gap-4 bg-white dark:bg-slate-900 relative z-20">
         <div>
-            <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
               {getHeaderTitle()}
             </h3>
-            <p className="text-sm text-slate-500 mt-0.5">{viewMode === 'month' ? 'Monthly Content Overview' : 'Weekly Detail View'}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{viewMode === 'month' ? 'Monthly Content Overview' : 'Weekly Detail View'}</p>
         </div>
         
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-          <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 shrink-0">
+          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 shrink-0">
              <button 
                onClick={() => setViewMode('month')}
-               className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${viewMode === 'month' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+               className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${viewMode === 'month' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
              >
                <CalendarIcon className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Month</span>
              </button>
              <button 
                onClick={() => setViewMode('week')}
-               className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${viewMode === 'week' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+               className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${viewMode === 'week' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
              >
                <LayoutGrid className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Week</span>
              </button>
           </div>
 
-          <div className="flex gap-1 bg-slate-50 p-1 rounded-lg border border-slate-100">
-            <button onClick={() => navigate('prev')} className="p-2 hover:bg-white hover:shadow-sm rounded-md transition-all"><ChevronLeft className="h-5 w-5 text-slate-600" /></button>
-            <button onClick={() => setCurrentDate(new Date())} className="px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-white hover:shadow-sm rounded-md transition-all">Today</button>
-            <button onClick={() => navigate('next')} className="p-2 hover:bg-white hover:shadow-sm rounded-md transition-all"><ChevronRight className="h-5 w-5 text-slate-600" /></button>
+          <div className="flex gap-1 bg-slate-50 dark:bg-slate-800 p-1 rounded-lg border border-slate-100 dark:border-slate-700">
+            <button onClick={() => navigate('prev')} className="p-2 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm rounded-md transition-all"><ChevronLeft className="h-5 w-5 text-slate-600 dark:text-slate-300" /></button>
+            <button onClick={() => setCurrentDate(new Date())} className="px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm rounded-md transition-all">Today</button>
+            <button onClick={() => navigate('next')} className="p-2 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm rounded-md transition-all"><ChevronRight className="h-5 w-5 text-slate-600 dark:text-slate-300" /></button>
           </div>
         </div>
       </div>
 
       {/* Days Header */}
-      <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50/80 shrink-0 backdrop-blur-sm z-10">
+      <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/80 shrink-0 backdrop-blur-sm z-10">
         {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => (
-          <div key={day} className="py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">
+          <div key={day} className="py-3 text-center text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
             <span className="hidden sm:inline">{day}</span>
             <span className="sm:hidden">{day.substring(0, 3)}</span>
           </div>
@@ -172,9 +172,9 @@ export const ContentCalendar: React.FC<ContentCalendarProps> = ({ ideas, onIdeaC
       </div>
 
       {/* Calendar Grid */}
-      <div className={`grid grid-cols-7 flex-1 bg-slate-100/50 gap-px overflow-y-auto ${viewMode === 'week' ? 'h-full' : 'auto-rows-fr'}`}>
+      <div className={`grid grid-cols-7 flex-1 bg-slate-100/50 dark:bg-slate-950 gap-px overflow-y-auto ${viewMode === 'week' ? 'h-full' : 'auto-rows-fr'}`}>
         {calendarDays.map((date, index) => {
-          if (!date) return <div key={`empty-${index}`} className="bg-white min-h-[140px]" />;
+          if (!date) return <div key={`empty-${index}`} className="bg-white dark:bg-slate-900 min-h-[140px]" />;
           
           const dayIdeas = getIdeasForDate(date);
           const isToday = new Date().toDateString() === date.toDateString();
@@ -190,13 +190,13 @@ export const ContentCalendar: React.FC<ContentCalendarProps> = ({ ideas, onIdeaC
                 className={`
                     flex flex-col p-2 transition-all group relative
                     ${viewMode === 'month' ? 'min-h-[140px]' : 'h-full min-h-[300px]'} 
-                    ${isDragOver ? 'bg-blue-50 ring-inset ring-2 ring-primary-400 z-10' : 'bg-white hover:bg-slate-50/50'}
-                    ${isToday ? 'bg-blue-50/20' : ''}
+                    ${isDragOver ? 'bg-blue-50 dark:bg-blue-900/20 ring-inset ring-2 ring-primary-400 z-10' : 'bg-white dark:bg-slate-900 hover:bg-slate-50/50 dark:hover:bg-slate-800/50'}
+                    ${isToday ? 'bg-blue-50/20 dark:bg-blue-900/10' : ''}
                 `}
             >
               {/* Date Indicator */}
               <div className="flex justify-end mb-2">
-                  <span className={`text-xs font-semibold w-7 h-7 flex items-center justify-center rounded-full ${isToday ? 'bg-primary-600 text-white shadow-md' : 'text-slate-400 group-hover:text-slate-700'}`}>
+                  <span className={`text-xs font-semibold w-7 h-7 flex items-center justify-center rounded-full ${isToday ? 'bg-primary-600 text-white shadow-md' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'}`}>
                     {date.getDate()}
                   </span>
               </div>
@@ -231,8 +231,8 @@ export const ContentCalendar: React.FC<ContentCalendarProps> = ({ ideas, onIdeaC
                                 </div>
                             )}
 
-                            {/* Platform Icon Badge (Top Left) - White rounded square */}
-                            <div className="absolute top-2 left-2 bg-white p-1.5 rounded-lg shadow-sm z-10 flex items-center justify-center h-7 w-7">
+                            {/* Platform Icon Badge (Top Left) */}
+                            <div className="absolute top-2 left-2 bg-white dark:bg-slate-800 p-1.5 rounded-lg shadow-sm z-10 flex items-center justify-center h-7 w-7">
                                 {getPlatformIcon(platform)}
                             </div>
 
@@ -243,7 +243,7 @@ export const ContentCalendar: React.FC<ContentCalendarProps> = ({ ideas, onIdeaC
                                       <CheckCircle2 className="h-3 w-3" />
                                    </div>
                                 ) : (
-                                   <div className="bg-white/90 text-slate-600 px-1.5 py-0.5 rounded-md shadow-sm backdrop-blur-sm text-[10px] font-bold uppercase tracking-wide">
+                                   <div className="bg-white/90 dark:bg-slate-800/90 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded-md shadow-sm backdrop-blur-sm text-[10px] font-bold uppercase tracking-wide">
                                       {idea.post_type}
                                    </div>
                                 )}
@@ -261,8 +261,8 @@ export const ContentCalendar: React.FC<ContentCalendarProps> = ({ ideas, onIdeaC
                 
                 {/* Drop Zone Visual */}
                 {isDragOver && dayIdeas.length === 0 && (
-                   <div className="h-full border-2 border-dashed border-primary-300 rounded-lg flex items-center justify-center bg-primary-50/50 m-1">
-                      <span className="text-xs text-primary-600 font-medium">Drop here</span>
+                   <div className="h-full border-2 border-dashed border-primary-300 dark:border-primary-700 rounded-lg flex items-center justify-center bg-primary-50/50 dark:bg-primary-900/20 m-1">
+                      <span className="text-xs text-primary-600 dark:text-primary-400 font-medium">Drop here</span>
                    </div>
                 )}
               </div>

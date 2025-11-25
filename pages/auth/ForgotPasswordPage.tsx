@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -28,23 +29,23 @@ export const ForgotPasswordPage: React.FC = () => {
 
   if (isSubmitted) {
     return (
-      <Card className="w-full shadow-xl border-0">
+      <Card className="w-full shadow-xl border-0 dark:bg-slate-900 dark:border-slate-800">
         <CardContent className="pt-10 pb-10 flex flex-col items-center text-center space-y-4">
-          <div className="bg-green-100 p-3 rounded-full">
-            <Mail className="h-8 w-8 text-green-600" />
+          <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-full">
+            <Mail className="h-8 w-8 text-green-600 dark:text-green-400" />
           </div>
-          <h3 className="text-2xl font-semibold text-slate-900">Check your email</h3>
-          <p className="text-slate-600 max-w-sm">
+          <h3 className="text-2xl font-semibold text-slate-900 dark:text-white">Check your email</h3>
+          <p className="text-slate-600 dark:text-slate-400 max-w-sm">
             We have sent a password reset link to <strong>{email}</strong>.
           </p>
           <Button 
             variant="outline" 
-            className="mt-4" 
+            className="mt-4 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800" 
             onClick={() => setIsSubmitted(false)}
           >
             Try another email
           </Button>
-          <Link to="/login" className="mt-4 text-sm text-slate-500 hover:text-slate-900 flex items-center">
+          <Link to="/login" className="mt-4 text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 flex items-center">
             <ArrowLeft className="mr-1 h-4 w-4" /> Back to sign in
           </Link>
         </CardContent>
@@ -53,10 +54,10 @@ export const ForgotPasswordPage: React.FC = () => {
   }
 
   return (
-    <Card className="w-full shadow-xl border-0">
+    <Card className="w-full shadow-xl border-0 dark:bg-slate-900 dark:border-slate-800">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">Reset password</CardTitle>
-        <CardDescription className="text-center">
+        <CardTitle className="text-2xl text-center dark:text-white">Reset password</CardTitle>
+        <CardDescription className="text-center dark:text-slate-400">
           Enter your email address and we'll send you a link to reset your password
         </CardDescription>
       </CardHeader>
@@ -70,6 +71,7 @@ export const ForgotPasswordPage: React.FC = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            className="dark:bg-slate-950 dark:border-slate-800 dark:text-white"
           />
           <Button type="submit" className="w-full" isLoading={isLoading}>
             Send Reset Link
@@ -77,7 +79,7 @@ export const ForgotPasswordPage: React.FC = () => {
         </form>
       </CardContent>
       <CardFooter className="justify-center">
-        <Link to="/login" className="text-sm text-slate-600 hover:text-slate-900 flex items-center">
+        <Link to="/login" className="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 flex items-center">
           <ArrowLeft className="mr-1 h-4 w-4" /> Back to sign in
         </Link>
       </CardFooter>

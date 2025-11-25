@@ -1,6 +1,7 @@
 
 import { mockDb } from '../lib/mockDb';
 import { Project, ProjectMember, ProjectStatus } from '../types';
+import { notificationService } from './notificationService';
 
 export const projectService = {
   async getProjects(organizationId: string, statusFilter?: ProjectStatus): Promise<Project[]> {
@@ -63,6 +64,19 @@ export const projectService = {
         role_id: m.roleId,
         added_by: creatorId
       });
+    });
+
+    // --- NOTIFICATION TRIGGER ---
+    // Notify creator (acting as Admin) about new project creation
+    const creator = mockDb.find('users', (u: any) => u.id === creatorId);
+    await notificationService.createNotification({
+        user_id: creatorId,
+        organization_id: organizationId,
+        type: 'project_created',
+        title: 'New Project Created',
+        message: `${creator?.full_name} created a new project: ${projectData.name} for ${projectData.client_name}`,
+        sender_id: 'system',
+        link_url: `/projects/${project.id}`
     });
 
     return project.id;

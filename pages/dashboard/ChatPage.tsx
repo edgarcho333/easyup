@@ -33,9 +33,9 @@ export const ChatPage: React.FC = () => {
   const activeConversation = conversations.find(c => c.id === activeId);
 
   return (
-    <div className="h-[calc(100vh-100px)] bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex relative">
+    <div className="h-[calc(100vh-100px)] bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex relative">
       {/* Sidebar: Hidden on mobile if chat active */}
-      <div className={`w-full md:w-80 border-r border-slate-200 bg-white flex flex-col h-full ${activeId ? 'hidden md:flex' : 'flex'}`}>
+      <div className={`w-full md:w-80 border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 flex flex-col h-full ${activeId ? 'hidden md:flex' : 'flex'}`}>
         <ChatSidebar 
           conversations={conversations} 
           activeId={activeId} 
@@ -45,16 +45,16 @@ export const ChatPage: React.FC = () => {
       </div>
 
       {/* Window: Hidden on mobile if no chat active */}
-      <div className={`flex-1 h-full ${!activeId ? 'hidden md:flex' : 'flex'}`}>
+      <div className={`flex-1 h-full bg-slate-50 dark:bg-slate-950 ${!activeId ? 'hidden md:flex' : 'flex'}`}>
         {activeConversation ? (
           <ChatWindow 
             conversation={activeConversation} 
             onBack={() => setActiveId(null)}
           />
         ) : (
-          <div className="h-full flex flex-col items-center justify-center text-slate-400 w-full">
-             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                <MessageSquare className="h-8 w-8 text-slate-300" />
+          <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 w-full">
+             <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                <MessageSquare className="h-8 w-8 text-slate-300 dark:text-slate-600" />
              </div>
              <p>Select a conversation to start messaging</p>
           </div>

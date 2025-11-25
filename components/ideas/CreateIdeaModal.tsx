@@ -1,18 +1,20 @@
 
 import React, { useState, useEffect } from 'react';
+import { GoogleGenAI } from "@google/genai";
 import { useAuth } from '../../context/AuthContext';
 import { ideaService } from '../../services/ideaService';
-import { Idea, Platform, PostType } from '../../types';
+import { Idea, Platform, PostType, Project } from '../../types';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { X, Image, Video, Layers, Instagram, Facebook, Linkedin, Twitter, Upload, Check, Save } from 'lucide-react';
+import { X, Image, Video, Layers, Instagram, Facebook, Linkedin, Twitter, Upload, Check, Save, Wand2, Loader2 } from 'lucide-react';
 
 interface CreateIdeaModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   projectId: string;
-  ideaToEdit?: Idea | null; // Added for Edit Mode
+  ideaToEdit?: Idea | null;
+  projectContext?: Project | null; // Added context for AI
 }
 
 const PLATFORMS: { id: Platform; label: string; icon: any }[] = [
@@ -31,9 +33,11 @@ const POST_TYPES: { id: PostType; label: string; icon: any }[] = [
   { id: 'story', label: 'Story', icon: Image },
 ];
 
-export const CreateIdeaModal: React.FC<CreateIdeaModalProps> = ({ isOpen, onClose, onSuccess, projectId, ideaToEdit }) => {
+export const CreateIdeaModal: React.FC<CreateIdeaModalProps> = ({ isOpen, onClose, onSuccess, projectId, ideaToEdit, projectContext }) => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [loadingStage, setLoadingStage] = useState<string>(''); // 'text' or 'image'
   const [error, setError] = useState('');
 
   const [title, setTitle] = useState('');
@@ -66,6 +70,7 @@ export const CreateIdeaModal: React.FC<CreateIdeaModalProps> = ({ isOpen, onClos
         setExistingReferenceUrl(undefined);
       }
       setError('');
+      setLoadingStage('');
     }
   }, [isOpen, ideaToEdit]);
 
@@ -77,6 +82,94 @@ export const CreateIdeaModal: React.FC<CreateIdeaModalProps> = ({ isOpen, onClos
     if (e.target.files && e.target.files[0]) {
       setReferenceFile(e.target.files[0]);
       setExistingReferenceUrl(undefined); // Clear existing if new file chosen
+    }
+  };
+
+  const handleAIGenerate = async () => {
+    if (!projectContext) {
+      setError("Project details are missing. Cannot generate idea.");
+      return;
+    }
+    
+    setIsGeneratingAI(true);
+    setLoadingStage('Brainstorming concept...');
+    setError('');
+
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      
+      // 1. Generate Text Concept using Gemini Flash
+      const prompt = `
+        You are a creative social media strategist. Generate a unique, engaging campaign post idea.
+        
+        Project Context:
+        - Project Name: ${projectContext.name}
+        - Client: ${projectContext.client_name}
+        - Description: ${projectContext.description || 'General brand awareness'}
+        
+        Output strictly in JSON format with the following schema:
+        {
+          "title": "Short catchy internal title for the idea",
+          "content": "The caption/copy for the post (include hashtags)",
+          "post_type": "One of: image, video, carousel, reel, story",
+          "platforms": ["Array of strings: instagram, facebook, linkedin, twitter, or tiktok"]
+        }
+      `;
+
+      const textResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: { responseMimeType: 'application/json' }
+      });
+
+      const text = textResponse.text;
+      let generatedData: any = {};
+
+      if (text) {
+        generatedData = JSON.parse(text);
+        setTitle(generatedData.title || '');
+        setContent(generatedData.content || '');
+        if (generatedData.post_type) setPostType(generatedData.post_type.toLowerCase() as PostType);
+        if (generatedData.platforms && Array.isArray(generatedData.platforms)) {
+           const validPlatforms = generatedData.platforms
+             .map((p: string) => p.toLowerCase())
+             .filter((p: string) => ['instagram', 'facebook', 'linkedin', 'twitter', 'tiktok'].includes(p));
+           setPlatforms(validPlatforms);
+        }
+      }
+
+      // 2. Generate Reference Image using Gemini 2.5 Flash Image (Nano Banana)
+      if (generatedData.content) {
+        setLoadingStage('Generating reference visual...');
+        
+        const imagePrompt = `Create a high quality, photorealistic social media image reference for the following post content: ${generatedData.content}. Context: ${projectContext.client_name} - ${projectContext.name}. No text overlay.`;
+        
+        const imageResponse = await ai.models.generateContent({
+          model: 'gemini-2.5-flash-image',
+          contents: imagePrompt,
+        });
+
+        if (imageResponse.candidates?.[0]?.content?.parts) {
+          for (const part of imageResponse.candidates[0].content.parts) {
+            if (part.inlineData) {
+              const base64Str = part.inlineData.data;
+              const mimeType = part.inlineData.mimeType || 'image/png';
+              const imageUrl = `data:${mimeType};base64,${base64Str}`;
+              
+              setExistingReferenceUrl(imageUrl);
+              setReferenceFile(null);
+              break;
+            }
+          }
+        }
+      }
+
+    } catch (err: any) {
+      console.error(err);
+      setError("Failed to generate idea completely. Partial results may be filled.");
+    } finally {
+      setIsGeneratingAI(false);
+      setLoadingStage('');
     }
   };
 
@@ -143,6 +236,32 @@ export const CreateIdeaModal: React.FC<CreateIdeaModalProps> = ({ isOpen, onClos
           {error && (
             <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-md border border-red-100">
               {error}
+            </div>
+          )}
+
+          {/* AI Generator Banner (Only in Create Mode) */}
+          {!isEditing && projectContext && (
+            <div className="mb-6 p-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-xl">
+              <div className="bg-white rounded-[10px] p-4 flex items-center justify-between gap-4">
+                 <div className="min-w-0">
+                    <h4 className="font-bold text-slate-900 flex items-center gap-2">
+                      <Wand2 className="h-4 w-4 text-purple-600" /> AI Idea Generator
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-1 truncate">
+                      {isGeneratingAI ? loadingStage : 'Auto-generate concept & visual reference.'}
+                    </p>
+                 </div>
+                 <Button 
+                   type="button" 
+                   size="sm" 
+                   onClick={handleAIGenerate}
+                   disabled={isGeneratingAI}
+                   className="bg-slate-900 text-white hover:bg-slate-800 border-none shadow-md shrink-0"
+                 >
+                   {isGeneratingAI ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Wand2 className="h-3 w-3 mr-2" />}
+                   {isGeneratingAI ? 'Working...' : 'Magic Generate'}
+                 </Button>
+              </div>
             </div>
           )}
 
@@ -226,13 +345,13 @@ export const CreateIdeaModal: React.FC<CreateIdeaModalProps> = ({ isOpen, onClos
                  />
                  <div className="space-y-1">
                    <label className="text-sm font-medium text-slate-700">Reference Image</label>
-                   <div className={`relative flex items-center justify-center w-full h-10 px-3 rounded-md border transition-colors cursor-pointer
+                   <div className={`relative flex items-center justify-center w-full h-10 px-3 rounded-md border transition-colors cursor-pointer overflow-hidden
                      ${referenceFile || existingReferenceUrl ? 'border-primary-200 bg-primary-50 text-primary-700' : 'border-dashed border-slate-300 hover:bg-slate-50 text-slate-500 bg-white'}`}>
                      <input 
                         type="file" 
                         accept="image/*"
                         onChange={handleFileChange}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                      />
                      {referenceFile ? (
                        <div className="flex items-center gap-2 truncate">
@@ -240,9 +359,20 @@ export const CreateIdeaModal: React.FC<CreateIdeaModalProps> = ({ isOpen, onClos
                          <span className="truncate text-sm font-medium">{referenceFile.name}</span>
                        </div>
                      ) : existingReferenceUrl ? (
-                       <div className="flex items-center gap-2 truncate">
-                         <Image className="h-4 w-4 shrink-0" />
-                         <span className="truncate text-sm font-medium">Current Reference Image</span>
+                       <div className="flex items-center gap-2 truncate w-full">
+                         {existingReferenceUrl.startsWith('data:') ? (
+                            <div className="h-8 w-8 rounded overflow-hidden shrink-0 border border-slate-200 bg-white">
+                               <img src={existingReferenceUrl} className="w-full h-full object-cover" />
+                            </div>
+                         ) : (
+                            <Image className="h-4 w-4 shrink-0" />
+                         )}
+                         <span className="truncate text-sm font-medium">
+                            {existingReferenceUrl.startsWith('data:') ? 'AI Generated Image' : 'Current Reference Image'}
+                         </span>
+                         <Button type="button" size="sm" variant="ghost" className="ml-auto h-6 w-6 p-0 z-20" onClick={(e) => {e.stopPropagation(); setExistingReferenceUrl(undefined);}}>
+                            <X className="h-3 w-3" />
+                         </Button>
                        </div>
                      ) : (
                        <div className="flex items-center gap-2">

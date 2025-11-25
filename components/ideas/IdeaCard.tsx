@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Idea } from '../../types';
 import { 
   Video, 
@@ -14,7 +14,10 @@ import {
   Globe, 
   Bookmark, 
   MessageCircle,
-  Check
+  Check,
+  Edit2,
+  Trash2,
+  Eye
 } from 'lucide-react';
 import { IdeaStatusBadge } from './IdeaStatusBadge';
 import { Button } from '../ui/Button';
@@ -24,6 +27,8 @@ interface IdeaCardProps {
   onClick: () => void;
   onApprove?: () => void;
   onRequestChanges?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   showActions?: boolean;
   clientName?: string;
   isSelectionMode?: boolean;
@@ -36,13 +41,28 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({
   onClick, 
   onApprove, 
   onRequestChanges, 
+  onEdit,
+  onDelete,
   showActions = false, 
   clientName,
   isSelectionMode,
   isSelected,
   onToggleSelection
 }) => {
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   
+  // Close menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   // Determine primary platform to style against
   const platform = idea.platforms[0] || 'facebook';
   
@@ -59,8 +79,10 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({
   const isReference = !latestAsset && !!idea.reference_image_url;
   const isVideo = latestAsset?.file_type.includes('video') || idea.post_type === 'video' || idea.post_type === 'reel';
 
-  const isApprovalPending = idea.status === 'pending_approval' || idea.status === 'pending_final_review';
-  const showButtons = showActions && isApprovalPending && onApprove && onRequestChanges && !isSelectionMode;
+  // Determine if we should show the action buttons (Approve/Changes)
+  // We show them for Pending Approval, In Production (Fast Track), and Pending Final Review
+  const isActionable = ['pending_approval', 'in_production', 'pending_final_review'].includes(idea.status);
+  const showButtons = showActions && isActionable && onApprove && onRequestChanges && !isSelectionMode;
 
   const handleCardClick = (e: React.MouseEvent) => {
     if (isSelectionMode && onToggleSelection) {
@@ -70,6 +92,11 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({
     } else {
       onClick();
     }
+  };
+
+  const toggleMenu = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowMenu(!showMenu);
   };
 
   // --- Components for Layout Parts ---
@@ -107,7 +134,55 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({
           </div>
         </div>
       </div>
-      <MoreHorizontal className="h-5 w-5 text-slate-500 cursor-pointer" />
+      
+      {/* Menu Button */}
+      <div className="relative" ref={menuRef}>
+        <button 
+          onClick={toggleMenu}
+          className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+        >
+          <MoreHorizontal className="h-5 w-5 text-slate-500" />
+        </button>
+
+        {/* Dropdown Menu */}
+        {showMenu && (
+          <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-slate-100 dark:border-slate-700 z-50 animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
+             <button 
+               onClick={(e) => { e.stopPropagation(); setShowMenu(false); onClick(); }}
+               className="w-full text-left px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2"
+             >
+               <Eye className="h-4 w-4 text-slate-400" /> View Details
+             </button>
+             
+             {onToggleSelection && (
+               <button 
+                 onClick={(e) => { e.stopPropagation(); setShowMenu(false); onToggleSelection(); }}
+                 className="w-full text-left px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2"
+               >
+                 <CheckCircle2 className="h-4 w-4 text-slate-400" /> {isSelected ? 'Deselect' : 'Select'}
+               </button>
+             )}
+
+             {onEdit && (idea.status === 'draft' || idea.status === 'changes_requested') && (
+               <button 
+                 onClick={(e) => { e.stopPropagation(); setShowMenu(false); onEdit(); }}
+                 className="w-full text-left px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2"
+               >
+                 <Edit2 className="h-4 w-4 text-slate-400" /> Edit Idea
+               </button>
+             )}
+             
+             {onDelete && (
+               <button 
+                 onClick={(e) => { e.stopPropagation(); setShowMenu(false); onDelete(); }}
+                 className="w-full text-left px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 border-t border-slate-100 dark:border-slate-800"
+               >
+                 <Trash2 className="h-4 w-4" /> Delete
+               </button>
+             )}
+          </div>
+        )}
+      </div>
     </div>
   );
 
@@ -207,12 +282,15 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({
       `}
       onClick={handleCardClick}
     >
-      {/* Selection Checkbox Overlay */}
-      {isSelectionMode && (
-        <div className="absolute top-3 left-3 z-30 animate-in fade-in zoom-in duration-200">
-           <div className={`h-6 w-6 rounded-md border flex items-center justify-center transition-all shadow-sm ${isSelected ? 'bg-primary-600 border-primary-600' : 'bg-white border-slate-300 hover:border-primary-400'}`}>
+      {/* Selection Checkbox Overlay - Visible in Mode OR Hover */}
+      {onToggleSelection && (
+        <div className={`absolute top-3 left-3 z-30 transition-all duration-200 ${isSelectionMode ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+           <button 
+             onClick={(e) => { e.stopPropagation(); onToggleSelection(); }}
+             className={`h-6 w-6 rounded-md border flex items-center justify-center transition-all shadow-sm hover:scale-110 ${isSelected ? 'bg-primary-600 border-primary-600' : 'bg-white border-slate-300 hover:border-primary-400'}`}
+           >
               {isSelected && <Check className="h-4 w-4 text-white" strokeWidth={3} />}
-           </div>
+           </button>
         </div>
       )}
 
@@ -248,20 +326,20 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({
 
       {/* --- Real Dashboard Actions (Sticky Bottom) --- */}
       {!isSelectionMode && (
-        <div className="p-3 border-t border-slate-100 bg-slate-50 flex gap-2">
+        <div className="p-3 border-t border-slate-100 bg-slate-50 dark:bg-slate-900/50 dark:border-slate-800 flex gap-2">
            {showButtons ? (
                <>
                  <Button 
                    variant="outline" 
                    size="sm" 
-                   className="flex-1 h-9 text-xs px-0 border-slate-200 text-slate-600 hover:text-orange-600 hover:bg-orange-50 hover:border-orange-200 bg-white" 
+                   className="flex-1 h-9 text-xs px-0 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 bg-white dark:bg-slate-800 font-medium shadow-sm" 
                    onClick={(e) => { e.stopPropagation(); onRequestChanges!(); }}
                  >
                    <MessageSquare className="h-3.5 w-3.5 mr-1.5" /> Changes
                  </Button>
                  <Button 
                    size="sm" 
-                   className="flex-1 h-9 text-xs px-0 bg-green-600 hover:bg-green-700 text-white shadow-sm border-transparent" 
+                   className="flex-1 h-9 text-xs px-0 bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white shadow-sm border-transparent font-medium" 
                    onClick={(e) => { e.stopPropagation(); onApprove!(); }}
                  >
                    <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" /> Approve
@@ -271,7 +349,7 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({
                <Button 
                  variant="ghost"
                  size="sm"
-                 className="w-full h-9 text-xs text-slate-500 hover:text-primary-600 hover:bg-white border border-transparent hover:border-slate-200"
+                 className="w-full h-9 text-xs text-slate-500 hover:text-primary-600 hover:bg-white dark:hover:bg-slate-800 border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
                  onClick={(e) => { e.stopPropagation(); onClick(); }}
                >
                   Open Details <ArrowRight className="h-3.5 w-3.5 ml-1" />

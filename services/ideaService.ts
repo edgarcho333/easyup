@@ -28,10 +28,14 @@ export const ideaService = {
     mockDb.update('ideas', id, updates);
   },
 
+  async deleteIdea(id: string): Promise<void> {
+    mockDb.delete('ideas', id);
+  },
+
   async updateStatusWithApproval(
     id: string, 
     status: IdeaStatus, 
-    userId: string,
+    userId: string, 
     userRole: string,
     action: 'approved' | 'rejected' | 'requested_changes',
     comments?: string

@@ -133,10 +133,10 @@ export const OrganizationSettingsPage: React.FC = () => {
 
   if (!user?.currentOrganization && !isLoading) {
     return (
-      <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-300">
-        <Building2 className="h-12 w-12 mx-auto text-slate-300 mb-3" />
-        <h3 className="text-lg font-medium text-slate-900">No Organization Selected</h3>
-        <p className="text-slate-500 mb-4">Create a new organization using the switcher in the sidebar.</p>
+      <div className="text-center py-12 bg-slate-50 dark:bg-slate-900 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+        <Building2 className="h-12 w-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-200">No Organization Selected</h3>
+        <p className="text-slate-500 dark:text-slate-400 mb-4">Create a new organization using the switcher in the sidebar.</p>
       </div>
     );
   }
@@ -148,26 +148,26 @@ export const OrganizationSettingsPage: React.FC = () => {
         <div>
            <div className="flex items-center gap-2">
              <Building2 className="h-6 w-6 text-slate-400" />
-             <h1 className="text-3xl font-bold text-slate-900">Organization Settings</h1>
+             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Organization Settings</h1>
            </div>
-          <p className="text-slate-500 mt-1 ml-8">Manage your team, permissions, and organization details.</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-1 ml-8">Manage your team, permissions, and organization details.</p>
         </div>
       </div>
 
       {loadError && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-md flex items-start gap-3 border border-red-100">
+        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-md flex items-start gap-3 border border-red-100 dark:border-red-800">
           <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0" />
           <div>
             <span className="font-medium">Error:</span> {loadError}
             <div className="mt-2">
-               <Button variant="outline" size="sm" className="border-red-200 bg-white hover:bg-red-50 text-red-700" onClick={fetchData}>Retry</Button>
+               <Button variant="outline" size="sm" className="border-red-200 dark:border-red-800 bg-white dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/40 text-red-700 dark:text-red-300" onClick={fetchData}>Retry</Button>
             </div>
           </div>
         </div>
       )}
 
       {actionError && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-md flex items-center justify-between border border-red-100">
+        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-md flex items-center justify-between border border-red-100 dark:border-red-800">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5" />
             <span>{actionError}</span>
@@ -179,37 +179,37 @@ export const OrganizationSettingsPage: React.FC = () => {
       {!loadError && user?.currentOrganization && (
         <>
           {/* Organization Info Card */}
-          <Card>
+          <Card className="dark:bg-slate-800 dark:border-slate-700">
             <CardHeader>
-              <CardTitle>Organization Information</CardTitle>
+              <CardTitle className="dark:text-white">Organization Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex flex-col space-y-4">
                 <div>
-                   <label className="text-sm font-medium text-slate-700 block mb-1">Organization Name</label>
+                   <label className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-1">Organization Name</label>
                    <div className="flex gap-2 max-w-md">
                      <Input 
                        value={orgName} 
                        onChange={e => setOrgName(e.target.value)} 
                        disabled={!isEditingInfo} 
-                       className={isEditingInfo ? 'bg-white' : 'bg-slate-50 text-slate-600'}
+                       className={isEditingInfo ? 'bg-white dark:bg-slate-900 dark:text-white' : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}
                      />
                    </div>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-slate-500 bg-slate-50 p-4 rounded-lg border border-slate-100">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border border-slate-100 dark:border-slate-700">
                   <div>
-                    <span className="font-medium text-slate-700">Created:</span>{' '}
+                    <span className="font-medium text-slate-700 dark:text-slate-200">Created:</span>{' '}
                     {new Date(user.currentOrganization.created_at).toLocaleDateString()}
                   </div>
                   <div>
-                    <span className="font-medium text-slate-700">Members:</span>{' '}
+                    <span className="font-medium text-slate-700 dark:text-slate-200">Members:</span>{' '}
                     {members.length}
                   </div>
                   <div className="sm:col-span-2 flex items-center gap-2">
-                    <span className="font-medium text-slate-700">Organization ID:</span> 
-                    <code className="bg-white px-2 py-0.5 rounded border border-slate-200 text-xs font-mono text-slate-600">{user.currentOrganization.id}</code>
-                    <button onClick={() => {navigator.clipboard.writeText(user.currentOrganization?.id || ''); setActionError('');}} className="text-slate-400 hover:text-primary-600" title="Copy ID">
+                    <span className="font-medium text-slate-700 dark:text-slate-200">Organization ID:</span> 
+                    <code className="bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 text-xs font-mono text-slate-600 dark:text-slate-300">{user.currentOrganization.id}</code>
+                    <button onClick={() => {navigator.clipboard.writeText(user.currentOrganization?.id || ''); setActionError('');}} className="text-slate-400 hover:text-primary-600 dark:hover:text-primary-400" title="Copy ID">
                       <Copy className="h-3 w-3" />
                     </button>
                   </div>
@@ -219,11 +219,11 @@ export const OrganizationSettingsPage: React.FC = () => {
               {canManage && (
                 <div className="flex gap-2">
                   {!isEditingInfo ? (
-                    <Button variant="outline" onClick={() => setIsEditingInfo(true)}>Edit Information</Button>
+                    <Button variant="outline" onClick={() => setIsEditingInfo(true)} className="dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700">Edit Information</Button>
                   ) : (
                     <>
                       <Button onClick={handleUpdateOrg} isLoading={isSavingOrg}>Save Changes</Button>
-                      <Button variant="ghost" onClick={() => { setIsEditingInfo(false); setOrgName(user.currentOrganization?.name || ''); }}>Cancel</Button>
+                      <Button variant="ghost" onClick={() => { setIsEditingInfo(false); setOrgName(user.currentOrganization?.name || ''); }} className="dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-700">Cancel</Button>
                     </>
                   )}
                 </div>
@@ -234,7 +234,7 @@ export const OrganizationSettingsPage: React.FC = () => {
           {/* Team Members Section */}
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <h2 className="text-xl font-bold text-slate-900">Team Members ({members.length})</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Team Members ({members.length})</h2>
               {canManage && (
                 <Button onClick={() => setIsInviteModalOpen(true)} className="w-full sm:w-auto">
                   <UserPlus className="mr-2 h-4 w-4" /> Invite Member
@@ -242,7 +242,7 @@ export const OrganizationSettingsPage: React.FC = () => {
               )}
             </div>
 
-            <Card>
+            <Card className="dark:bg-slate-800 dark:border-slate-700">
               <CardContent className="p-6">
                 {/* Filters */}
                 <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -250,13 +250,13 @@ export const OrganizationSettingsPage: React.FC = () => {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <Input 
                       placeholder="Search members by name or email..." 
-                      className="pl-9" 
+                      className="pl-9 dark:bg-slate-900 dark:border-slate-600 dark:text-white" 
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
                     />
                   </div>
                   <select 
-                    className="h-10 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none"
+                    className="h-10 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none text-slate-900 dark:text-white"
                     value={statusFilter}
                     onChange={e => setStatusFilter(e.target.value)}
                   >
@@ -269,29 +269,29 @@ export const OrganizationSettingsPage: React.FC = () => {
                 {/* Member List */}
                 <div className="space-y-3">
                   {filteredMembers.length === 0 ? (
-                    <div className="text-center py-10 text-slate-500 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                    <div className="text-center py-10 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 rounded-lg border border-dashed border-slate-200 dark:border-slate-700">
                       {searchQuery ? 'No members match your search.' : 'No team members yet. Invite your first member!'}
                     </div>
                   ) : (
                     filteredMembers.map(member => (
-                      <div key={member.membershipId} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors bg-white gap-4">
+                      <div key={member.membershipId} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-colors bg-white dark:bg-slate-900/50 gap-4">
                         
                         <div className="flex items-start gap-4">
                           {member.avatar_url ? (
-                             <img src={member.avatar_url} className="h-12 w-12 rounded-full bg-slate-200 object-cover" alt="" />
+                             <img src={member.avatar_url} className="h-12 w-12 rounded-full bg-slate-200 dark:bg-slate-700 object-cover" alt="" />
                           ) : (
-                             <div className={`h-12 w-12 rounded-full flex items-center justify-center shrink-0 ${member.type === 'invitation' ? 'bg-yellow-100 text-yellow-700' : 'bg-primary-100 text-primary-700'}`}>
+                             <div className={`h-12 w-12 rounded-full flex items-center justify-center shrink-0 ${member.type === 'invitation' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' : 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'}`}>
                                {member.type === 'invitation' ? <Mail className="h-6 w-6" /> : <span className="font-bold text-lg">{member.full_name?.[0] || member.email[0].toUpperCase()}</span>}
                              </div>
                           )}
                           
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-slate-900">{member.full_name || (member.type === 'invitation' ? 'Pending User' : 'Unknown Name')}</span>
-                              {member.id === user.id && <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200 font-medium">YOU</span>}
+                              <span className="font-medium text-slate-900 dark:text-white">{member.full_name || (member.type === 'invitation' ? 'Pending User' : 'Unknown Name')}</span>
+                              {member.id === user.id && <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 font-medium">YOU</span>}
                             </div>
-                            <div className="text-sm text-slate-500">{member.email}</div>
-                            <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                            <div className="text-sm text-slate-500 dark:text-slate-400">{member.email}</div>
+                            <div className="flex items-center gap-2 mt-1 text-xs text-slate-400 dark:text-slate-500">
                                {member.type === 'invitation' ? (
                                  <>Invited by {member.invited_by_name} • {new Date(member.joined_at).toLocaleDateString()}</>
                                ) : (
@@ -304,20 +304,20 @@ export const OrganizationSettingsPage: React.FC = () => {
                         <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto mt-2 sm:mt-0 pl-[4rem] sm:pl-0">
                           <div className="flex flex-col items-end gap-1">
                              {/* Status Badge */}
-                             {member.status === 'active' && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-50 text-green-700 border border-green-100"><CheckCircle className="h-3 w-3 mr-1"/> Active</span>}
-                             {member.status === 'pending' && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-50 text-yellow-700 border border-yellow-100"><Clock className="h-3 w-3 mr-1"/> Pending Invite</span>}
+                             {member.status === 'active' && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-900/50"><CheckCircle className="h-3 w-3 mr-1"/> Active</span>}
+                             {member.status === 'pending' && <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border border-yellow-100 dark:border-yellow-900/50"><Clock className="h-3 w-3 mr-1"/> Pending Invite</span>}
 
                              {/* Role Badge/Select */}
                              {canManage && member.status === 'active' && member.id !== user.id ? (
                                <select 
                                  value={member.role.id}
                                  onChange={(e) => handleRoleChange(member.membershipId, e.target.value)}
-                                 className="text-xs border border-slate-200 bg-white rounded-md px-2 py-1 font-medium text-slate-700 cursor-pointer hover:bg-slate-50 focus:ring-1 focus:ring-primary-500 focus:outline-none mt-1"
+                                 className="text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-md px-2 py-1 font-medium text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 focus:ring-1 focus:ring-primary-500 focus:outline-none mt-1"
                                >
                                  {roles.map(r => <option key={r.id} value={r.id}>{r.display_name}</option>)}
                                </select>
                              ) : (
-                               <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-1 rounded-md border border-slate-200 mt-1">
+                               <span className="text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700 mt-1">
                                  {member.role.display_name}
                                </span>
                              )}
@@ -327,11 +327,11 @@ export const OrganizationSettingsPage: React.FC = () => {
                           {canManage && member.id !== user.id && (
                              <div className="flex items-center ml-2">
                                 {member.type === 'invitation' ? (
-                                  <Button variant="ghost" size="sm" onClick={() => handleCancelInvite(member.membershipId)} className="text-slate-400 hover:text-red-600 hover:bg-red-50 h-8 w-8 p-0" title="Cancel Invitation">
+                                  <Button variant="ghost" size="sm" onClick={() => handleCancelInvite(member.membershipId)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 h-8 w-8 p-0" title="Cancel Invitation">
                                     <XCircle className="h-4 w-4" />
                                   </Button>
                                 ) : (
-                                  <Button variant="ghost" size="sm" onClick={() => handleRemoveMember(member)} className="text-slate-400 hover:text-red-600 hover:bg-red-50 h-8 w-8 p-0" title="Remove from Organization">
+                                  <Button variant="ghost" size="sm" onClick={() => handleRemoveMember(member)} className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 h-8 w-8 p-0" title="Remove from Organization">
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 )}

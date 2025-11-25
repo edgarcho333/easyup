@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -32,17 +33,17 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <Card className="w-full shadow-xl border-0">
+    <Card className="w-full shadow-xl border-0 dark:bg-slate-900 dark:border-slate-800">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">Welcome back</CardTitle>
-        <CardDescription className="text-center">
+        <CardTitle className="text-2xl text-center dark:text-white">Welcome back</CardTitle>
+        <CardDescription className="text-center dark:text-slate-400">
           Enter your email to sign in to your account
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="p-3 rounded-md bg-red-50 border border-red-200 flex items-center space-x-2 text-sm text-red-600 animate-in fade-in slide-in-from-top-1">
+            <div className="p-3 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center space-x-2 text-sm text-red-600 dark:text-red-400 animate-in fade-in slide-in-from-top-1">
               <AlertCircle className="h-4 w-4" />
               <span>{error}</span>
             </div>
@@ -55,15 +56,16 @@ export const LoginPage: React.FC = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            className="dark:bg-slate-950 dark:border-slate-800 dark:text-white"
           />
           <div className="space-y-1">
             <div className="flex items-center justify-between">
-              <label htmlFor="password" className="text-sm font-medium leading-none text-slate-700">
+              <label htmlFor="password" class="text-sm font-medium leading-none text-slate-700 dark:text-slate-300">
                 Password
               </label>
               <Link 
                 to="/forgot-password" 
-                className="text-sm font-medium text-primary-600 hover:text-primary-500 hover:underline"
+                className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500 hover:underline"
               >
                 Forgot password?
               </Link>
@@ -75,6 +77,7 @@ export const LoginPage: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              className="dark:bg-slate-950 dark:border-slate-800 dark:text-white"
             />
           </div>
           <Button type="submit" className="w-full" isLoading={isLoading}>
@@ -82,9 +85,9 @@ export const LoginPage: React.FC = () => {
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="justify-center text-sm text-slate-600">
+      <CardFooter className="justify-center text-sm text-slate-600 dark:text-slate-400">
         Don't have an account?{' '}
-        <Link to="/register" className="ml-1 font-semibold text-primary-600 hover:text-primary-500 hover:underline">
+        <Link to="/register" className="ml-1 font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-500 hover:underline">
           Sign up
         </Link>
       </CardFooter>

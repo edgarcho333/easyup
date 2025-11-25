@@ -122,7 +122,7 @@ export const IdeaDetailsPage: React.FC = () => {
         description: `Concept approved. Please create visual assets.\n\nCopy: ${idea.content}`,
         status: 'todo',
         priority: 'high',
-        created_by: user.id,
+        created_by: 'user.id',
         assigned_to: user.id, 
         due_date: idea.planned_post_date || undefined
       });
@@ -250,12 +250,12 @@ export const IdeaDetailsPage: React.FC = () => {
   // --- Icons & Helpers ---
   const getPlatformIcon = (p: Platform) => {
     switch(p) {
-      case 'instagram': return <Instagram className="h-3.5 w-3.5 text-pink-600" />;
-      case 'facebook': return <Facebook className="h-3.5 w-3.5 text-blue-600" />;
-      case 'linkedin': return <Linkedin className="h-3.5 w-3.5 text-sky-700" />;
-      case 'twitter': return <Twitter className="h-3.5 w-3.5 text-sky-500" />;
-      case 'tiktok': return <Video className="h-3.5 w-3.5 text-slate-900" />;
-      default: return <Share2 className="h-3.5 w-3.5 text-slate-500" />;
+      case 'instagram': return <Instagram className="h-3.5 w-3.5 text-pink-600 dark:text-pink-400" />;
+      case 'facebook': return <Facebook className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />;
+      case 'linkedin': return <Linkedin className="h-3.5 w-3.5 text-sky-700 dark:text-sky-400" />;
+      case 'twitter': return <Twitter className="h-3.5 w-3.5 text-sky-500 dark:text-sky-300" />;
+      case 'tiktok': return <Video className="h-3.5 w-3.5 text-slate-900 dark:text-slate-100" />;
+      default: return <Share2 className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />;
     }
   };
 
@@ -305,36 +305,36 @@ export const IdeaDetailsPage: React.FC = () => {
   const currentStepIndex = steps.findIndex(s => s.active);
   
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50/50">
+    <div className="flex flex-col min-h-screen bg-slate-50/50 dark:bg-slate-950/50 transition-colors">
         
        {/* Unified Command Header */}
        <div className="sticky top-0 z-30 -mt-4 sm:-mt-6 lg:-mt-8 -mx-4 sm:-mx-6 lg:-mx-8 mb-6">
-        <div className="bg-white/80 backdrop-blur-xl border-b border-slate-200 shadow-sm px-4 sm:px-6 lg:px-8 py-3 flex flex-col lg:flex-row items-center justify-between gap-4 transition-all">
+        <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 shadow-sm px-4 sm:px-6 lg:px-8 py-3 flex flex-col lg:flex-row items-center justify-between gap-4 transition-all">
            
            {/* LEFT: Project Context */}
            <div className="flex items-center gap-4 w-full lg:w-auto">
               <button 
                 onClick={() => navigate('/projects')}
-                className="h-9 w-9 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-all shadow-sm group shrink-0"
+                className="h-9 w-9 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600 transition-all shadow-sm group shrink-0"
                 title="Back to Projects"
               >
                 <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
               </button>
               
-              <div className="h-8 w-px bg-slate-200 hidden sm:block"></div>
+              <div className="h-8 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
               
               <div className="flex items-center gap-3 min-w-0 flex-1">
                  {project ? (
                    <>
-                     <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-inner ring-2 ring-white">
+                     <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-inner ring-2 ring-white dark:ring-slate-800">
                         {project.name[0]}
                      </div>
                      <div className="flex flex-col min-w-0">
-                        <h1 className="text-sm font-bold text-slate-900 truncate leading-tight flex items-center gap-2">
+                        <h1 className="text-sm font-bold text-slate-900 dark:text-white truncate leading-tight flex items-center gap-2">
                           {project.name}
-                          <span className={`inline-flex w-2 h-2 rounded-full ${project.status === 'active' ? 'bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'bg-slate-300'}`}></span>
+                          <span className={`inline-flex w-2 h-2 rounded-full ${project.status === 'active' ? 'bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'bg-slate-300 dark:bg-slate-600'}`}></span>
                         </h1>
-                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium leading-tight">
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">
                            <Briefcase className="h-3 w-3" />
                            <span className="truncate">{project.client_name}</span>
                         </div>
@@ -342,10 +342,10 @@ export const IdeaDetailsPage: React.FC = () => {
                    </>
                  ) : (
                    <>
-                     <div className="w-9 h-9 rounded-lg bg-slate-200 animate-pulse shrink-0"></div>
+                     <div className="w-9 h-9 rounded-lg bg-slate-200 dark:bg-slate-700 animate-pulse shrink-0"></div>
                      <div className="flex flex-col gap-1.5 w-32">
-                        <div className="h-4 bg-slate-200 rounded animate-pulse w-full"></div>
-                        <div className="h-3 bg-slate-200 rounded animate-pulse w-2/3"></div>
+                        <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse w-full"></div>
+                        <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded animate-pulse w-2/3"></div>
                      </div>
                    </>
                  )}
@@ -354,7 +354,7 @@ export const IdeaDetailsPage: React.FC = () => {
 
            {/* CENTER: Navigation Tabs */}
            <div className="w-full lg:w-auto overflow-x-auto no-scrollbar flex justify-center order-last lg:order-none">
-              <div className="flex items-center p-1 bg-slate-100/80 rounded-full border border-slate-200/60 backdrop-blur-sm">
+              <div className="flex items-center p-1 bg-slate-100/80 dark:bg-slate-800/80 rounded-full border border-slate-200/60 dark:border-slate-700/60 backdrop-blur-sm">
                  {tabs.map((tab) => {
                     const Icon = tab.icon;
                     const isActive = tab.id === 'content'; 
@@ -365,11 +365,11 @@ export const IdeaDetailsPage: React.FC = () => {
                           className={`
                              flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 whitespace-nowrap
                              ${isActive 
-                                ? 'bg-white text-slate-900 shadow-sm ring-1 ring-black/5' 
-                                : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'}
+                                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm ring-1 ring-black/5 dark:ring-white/5' 
+                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-700/50'}
                           `}
                        >
-                          <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
+                          <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}`} />
                           {tab.label}
                        </button>
                     );
@@ -381,11 +381,11 @@ export const IdeaDetailsPage: React.FC = () => {
            <div className="flex items-center justify-end gap-3 w-full lg:w-auto hidden sm:flex">
               <button 
                 onClick={() => setIsChatOpen(true)} 
-                className="group relative flex items-center gap-2 pl-3 pr-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                className="group relative flex items-center gap-2 pl-3 pr-4 py-2 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
               >
                  <div className="relative">
-                   <MessageSquare className="h-4 w-4 text-indigo-200" />
-                   <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-blue-500 rounded-full border-2 border-slate-900 animate-pulse"></span>
+                   <MessageSquare className="h-4 w-4 text-indigo-200 dark:text-indigo-600" />
+                   <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-blue-500 rounded-full border-2 border-slate-900 dark:border-slate-100 animate-pulse"></span>
                  </div>
                  <span className="font-medium text-xs">Project Chat</span>
               </button>
@@ -397,18 +397,18 @@ export const IdeaDetailsPage: React.FC = () => {
          {isLoading ? (
             <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary-600" /></div>
          ) : !idea || !project ? (
-            <div className="p-8 text-center text-slate-500">Idea not found</div>
+            <div className="p-8 text-center text-slate-500 dark:text-slate-400">Idea not found</div>
          ) : (
            <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-2 space-y-6">
               {/* Header Content */}
               <div className="shrink-0 flex flex-col gap-4 mb-2">
                   <div className="flex items-center gap-4">
-                      <Button variant="ghost" onClick={() => navigate(`/projects/${id}/ideas`)} className="p-2 h-auto rounded-full hover:bg-slate-100 text-slate-500">
+                      <Button variant="ghost" onClick={() => navigate(`/projects/${id}/ideas`)} className="p-2 h-auto rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400">
                           <ArrowLeft className="h-5 w-5" />
                       </Button>
                       <div className="flex-1">
-                          <h1 className="text-2xl font-bold text-slate-900">{idea.title}</h1>
-                          <div className="flex items-center gap-2 text-sm text-slate-500 mt-1">
+                          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{idea.title}</h1>
+                          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mt-1">
                               <span>{idea.creator?.full_name}</span>
                               <span>•</span>
                               <span>{new Date(idea.created_at).toLocaleDateString()}</span>
@@ -420,14 +420,14 @@ export const IdeaDetailsPage: React.FC = () => {
                           
                           {/* Edit Button (Draft Stage) */}
                           {isEditable && (
-                             <Button variant="outline" onClick={() => setIsEditIdeaModalOpen(true)} className="border-slate-200 hover:bg-slate-50 text-slate-600">
+                             <Button variant="outline" onClick={() => setIsEditIdeaModalOpen(true)} className="border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300">
                                 <Edit2 className="h-4 w-4 mr-2" /> Edit
                              </Button>
                           )}
 
                           {/* Create Task Button */}
                           {(canManage || isCreator) && (
-                          <Button variant="outline" onClick={() => setIsCreateTaskModalOpen(true)} className="border-slate-200 hover:bg-slate-50 text-slate-600">
+                          <Button variant="outline" onClick={() => setIsCreateTaskModalOpen(true)} className="border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300">
                               <CheckSquare className="h-4 w-4 mr-2" /> Create Task
                           </Button>
                           )}
@@ -441,10 +441,10 @@ export const IdeaDetailsPage: React.FC = () => {
 
                           {idea.status === 'pending_approval' && canReview && (
                               <>
-                              <Button variant="outline" onClick={() => openFeedbackModal('requested_changes')} isLoading={isActionLoading} className="border-red-200 text-red-700 hover:bg-red-50">
+                              <Button variant="outline" onClick={() => openFeedbackModal('requested_changes')} isLoading={isActionLoading} className="border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
                                   <MessageSquare className="h-4 w-4 mr-2" /> Request Changes
                               </Button>
-                              <Button onClick={handleApproveConcept} isLoading={isActionLoading} className="bg-green-600 hover:bg-green-700 shadow-lg shadow-green-200">
+                              <Button onClick={handleApproveConcept} isLoading={isActionLoading} className="bg-green-600 hover:bg-green-700 shadow-lg shadow-green-200 dark:shadow-none">
                                   <CheckCircle className="h-4 w-4 mr-2" /> Approve Concept
                               </Button>
                               </>
@@ -458,10 +458,10 @@ export const IdeaDetailsPage: React.FC = () => {
                           
                           {idea.status === 'pending_final_review' && canReview && (
                               <>
-                                  <Button variant="outline" onClick={() => openFeedbackModal('requested_changes')} isLoading={isActionLoading} className="border-red-200 text-red-700 hover:bg-red-50">
+                                  <Button variant="outline" onClick={() => openFeedbackModal('requested_changes')} isLoading={isActionLoading} className="border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
                                   <MessageSquare className="h-4 w-4 mr-2" /> Request Changes
                                   </Button>
-                                  <Button onClick={handleFinalApprove} isLoading={isActionLoading} className="bg-green-600 hover:bg-green-700 shadow-lg shadow-green-200">
+                                  <Button onClick={handleFinalApprove} isLoading={isActionLoading} className="bg-green-600 hover:bg-green-700 shadow-lg shadow-green-200 dark:shadow-none">
                                   <CheckCircle2 className="h-4 w-4 mr-2" /> Final Approve
                                   </Button>
                               </>
@@ -470,25 +470,25 @@ export const IdeaDetailsPage: React.FC = () => {
                   </div>
 
                   {/* Process Stepper */}
-                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden">
-                      <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-slate-100 -z-10"></div>
+                  <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between relative overflow-hidden">
+                      <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-slate-100 dark:bg-slate-800 -z-10"></div>
                       {steps.map((step, idx) => {
                           const isCompleted = currentStepIndex > idx || idea.status === 'scheduled' || idea.status === 'published';
                           const isActive = step.active;
                           const isRejected = idea.status === 'changes_requested' || idea.status === 'rejected';
                           
                           return (
-                          <div key={step.id} className="flex flex-col items-center gap-2 bg-white px-2 z-10">
+                          <div key={step.id} className="flex flex-col items-center gap-2 bg-white dark:bg-slate-900 px-2 z-10 transition-colors">
                               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors shadow-sm
                                   ${isActive 
-                                      ? (isRejected ? 'bg-red-100 text-red-600 border-2 border-red-500' : 'bg-primary-600 text-white ring-4 ring-primary-50') 
+                                      ? (isRejected ? 'bg-red-100 text-red-600 border-2 border-red-500 dark:bg-red-900/30 dark:text-red-400 dark:border-red-600' : 'bg-primary-600 text-white ring-4 ring-primary-50 dark:ring-primary-900/30') 
                                       : isCompleted 
-                                          ? 'bg-green-50 text-white' 
-                                          : 'bg-slate-100 text-slate-400 border border-slate-200'}
+                                          ? 'bg-green-500 text-white dark:bg-green-600' 
+                                          : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700'}
                               `}>
                                   {isCompleted ? <CheckCircle2 className="h-5 w-5" /> : (idx + 1)}
                               </div>
-                              <span className={`text-xs font-medium ${isActive ? 'text-slate-900' : 'text-slate-400'}`}>{step.label}</span>
+                              <span className={`text-xs font-medium ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}>{step.label}</span>
                           </div>
                           );
                       })}
@@ -496,22 +496,22 @@ export const IdeaDetailsPage: React.FC = () => {
               </div>
 
               {/* Tabs */}
-              <div className="shrink-0 border-b border-slate-200">
+              <div className="shrink-0 border-b border-slate-200 dark:border-slate-700">
                   <div className="flex space-x-8">
                       <button 
                       onClick={() => setActiveTab('details')}
-                      className={`pb-4 px-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'details' ? 'border-primary-500 text-primary-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                      className={`pb-4 px-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'details' ? 'border-primary-500 text-primary-600 dark:text-primary-400 dark:border-primary-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                       >
                       <FileText className="h-4 w-4" />
                       Concept & Details
                       </button>
                       <button 
                       onClick={() => setActiveTab('assets')}
-                      className={`pb-4 px-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'assets' ? 'border-purple-500 text-purple-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                      className={`pb-4 px-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'assets' ? 'border-purple-500 text-purple-600 dark:text-purple-400 dark:border-purple-400' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                       >
                       <Palette className="h-4 w-4" />
                       Visual Assets
-                      {assets.length > 0 && <span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full text-xs">{assets.length}</span>}
+                      {assets.length > 0 && <span className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full text-xs">{assets.length}</span>}
                       </button>
                   </div>
               </div>
@@ -523,27 +523,27 @@ export const IdeaDetailsPage: React.FC = () => {
                           <div className="space-y-6 animate-in fade-in slide-in-from-left-2">
                             
                             {/* Unified Creative Brief Card */}
-                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                                {/* Brief Header */}
-                               <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                               <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
                                   <div className="flex items-center gap-2">
-                                     <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-100">
+                                     <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-lg border border-indigo-100 dark:border-indigo-900/30">
                                        <Sparkles className="h-4 w-4" />
                                      </div>
-                                     <h3 className="font-bold text-slate-900">Creative Brief</h3>
+                                     <h3 className="font-bold text-slate-900 dark:text-white">Creative Brief</h3>
                                   </div>
-                                  <div className="text-xs text-slate-400">
+                                  <div className="text-xs text-slate-400 dark:text-slate-500">
                                      Created {new Date(idea.created_at).toLocaleDateString()}
                                   </div>
                                </div>
 
-                               <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+                               <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100 dark:divide-slate-800">
                                   {/* Left Pane: Visual Reference */}
-                                  <div className="p-6 bg-slate-50/30 flex flex-col">
+                                  <div className="p-6 bg-slate-50/30 dark:bg-slate-800/20 flex flex-col">
                                      <div className="flex justify-between items-center mb-4">
-                                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Visual Reference</h4>
+                                        <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Visual Reference</h4>
                                         {idea.reference_image_url && (
-                                           <a href={idea.reference_image_url} target="_blank" rel="noreferrer" className="text-xs text-primary-600 hover:text-primary-700 hover:underline flex items-center gap-1">
+                                           <a href={idea.reference_image_url} target="_blank" rel="noreferrer" className="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 hover:underline flex items-center gap-1">
                                               <Maximize2 className="h-3 w-3" /> Full Size
                                            </a>
                                         )}
@@ -551,7 +551,7 @@ export const IdeaDetailsPage: React.FC = () => {
                                      
                                      <div className="flex-1 flex items-center justify-center">
                                         {idea.reference_image_url ? (
-                                          <div className="relative group rounded-xl overflow-hidden shadow-sm border border-slate-200 bg-white w-full max-w-sm mx-auto">
+                                          <div className="relative group rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 w-full max-w-sm mx-auto">
                                               <img src={idea.reference_image_url} alt="Reference" className="w-full h-auto max-h-[350px] object-cover" />
                                               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-2 backdrop-blur-[1px]">
                                                   <a href={idea.reference_image_url} target="_blank" rel="noreferrer" className="p-2.5 bg-white rounded-full hover:bg-primary-50 transition-colors shadow-lg transform scale-90 group-hover:scale-100">
@@ -560,12 +560,12 @@ export const IdeaDetailsPage: React.FC = () => {
                                               </div>
                                           </div>
                                         ) : (
-                                          <div className="w-full aspect-[4/3] rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center text-slate-400 p-8 text-center">
-                                              <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center mb-3 shadow-sm">
-                                                 <ImageIcon className="h-5 w-5 text-slate-300" />
+                                          <div className="w-full aspect-[4/3] rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 p-8 text-center">
+                                              <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center mb-3 shadow-sm border border-slate-100 dark:border-slate-700">
+                                                 <ImageIcon className="h-5 w-5 text-slate-300 dark:text-slate-600" />
                                               </div>
-                                              <p className="text-sm font-medium text-slate-500">No reference image provided</p>
-                                              <p className="text-xs text-slate-400 mt-1">Visual references help designers understand the vibe.</p>
+                                              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No reference image provided</p>
+                                              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Visual references help designers understand the vibe.</p>
                                           </div>
                                         )}
                                      </div>
@@ -574,26 +574,26 @@ export const IdeaDetailsPage: React.FC = () => {
                                   {/* Right Pane: Copy & Meta */}
                                   <div className="p-6 flex flex-col">
                                      <div className="flex items-center justify-between mb-4">
-                                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Caption / Copy</h4>
+                                        <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Caption / Copy</h4>
                                         <button 
                                           onClick={() => copyToClipboard(idea.content)} 
-                                          className="text-xs flex items-center gap-1.5 text-slate-500 hover:text-primary-600 transition-colors bg-slate-100 hover:bg-primary-50 px-2 py-1 rounded-md"
+                                          className="text-xs flex items-center gap-1.5 text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 transition-colors bg-slate-100 hover:bg-primary-50 dark:bg-slate-800 dark:hover:bg-primary-900/30 px-2 py-1 rounded-md border border-transparent hover:border-primary-200 dark:hover:border-primary-800"
                                         >
                                            <Copy className="h-3 w-3" /> Copy
                                         </button>
                                      </div>
                                      
-                                     <div className="flex-1 bg-slate-50 rounded-xl p-5 border border-slate-100 text-sm text-slate-800 whitespace-pre-wrap font-medium leading-relaxed shadow-inner mb-6 min-h-[150px]">
+                                     <div className="flex-1 bg-slate-50 dark:bg-slate-800 rounded-xl p-5 border border-slate-100 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap font-medium leading-relaxed shadow-inner mb-6 min-h-[150px]">
                                         {idea.content || <span className="text-slate-400 italic">No content text provided...</span>}
                                      </div>
                                      
                                      {/* Meta Grid */}
-                                     <div className="grid grid-cols-2 gap-4 pt-6 border-t border-slate-100">
+                                     <div className="grid grid-cols-2 gap-4 pt-6 border-t border-slate-100 dark:border-slate-800">
                                         <div>
-                                           <span className="text-xs text-slate-400 block mb-1.5 uppercase font-semibold tracking-wider">Target Platforms</span>
+                                           <span className="text-xs text-slate-400 dark:text-slate-500 block mb-1.5 uppercase font-semibold tracking-wider">Target Platforms</span>
                                            <div className="flex flex-wrap gap-1.5">
                                               {idea.platforms.map(p => (
-                                                 <div key={p} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg shadow-sm text-xs font-medium text-slate-700 capitalize">
+                                                 <div key={p} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm text-xs font-medium text-slate-700 dark:text-slate-300 capitalize">
                                                     {getPlatformIcon(p)} {p}
                                                  </div>
                                               ))}
@@ -601,14 +601,14 @@ export const IdeaDetailsPage: React.FC = () => {
                                         </div>
                                         
                                         <div>
-                                           <span className="text-xs text-slate-400 block mb-1.5 uppercase font-semibold tracking-wider">Format Details</span>
+                                           <span className="text-xs text-slate-400 dark:text-slate-500 block mb-1.5 uppercase font-semibold tracking-wider">Format Details</span>
                                            <div className="flex flex-col gap-1.5">
-                                              <div className="flex items-center gap-2 text-xs text-slate-600">
-                                                 <span className="p-1 bg-slate-100 rounded">{getTypeIcon(idea.post_type)}</span>
+                                              <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+                                                 <span className="p-1 bg-slate-100 dark:bg-slate-800 rounded">{getTypeIcon(idea.post_type)}</span>
                                                  <span className="capitalize font-medium">{idea.post_type}</span>
                                               </div>
-                                              <div className="flex items-center gap-2 text-xs text-slate-600">
-                                                 <span className="p-1 bg-slate-100 rounded"><Calendar className="h-3.5 w-3.5" /></span>
+                                              <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+                                                 <span className="p-1 bg-slate-100 dark:bg-slate-800 rounded"><Calendar className="h-3.5 w-3.5" /></span>
                                                  <span className="font-medium">{idea.planned_post_date ? new Date(idea.planned_post_date).toLocaleDateString() : 'No Date Set'}</span>
                                               </div>
                                            </div>
@@ -619,37 +619,37 @@ export const IdeaDetailsPage: React.FC = () => {
                             </div>
                           
                           {/* Approval History */}
-                          <Card>
-                              <CardHeader className="pb-2 border-b border-slate-100">
-                              <CardTitle className="flex items-center gap-2">
+                          <Card className="dark:bg-slate-900 dark:border-slate-800">
+                              <CardHeader className="pb-2 border-b border-slate-100 dark:border-slate-800">
+                              <CardTitle className="flex items-center gap-2 dark:text-white">
                                   <History className="h-4 w-4" /> Activity & Approvals
                               </CardTitle>
                               </CardHeader>
                               <CardContent className="pt-4 space-y-4">
                               {approvals.length === 0 ? (
-                                  <div className="text-center py-6 text-slate-400 text-sm bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                                  <div className="text-center py-6 text-slate-400 text-sm bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-dashed border-slate-200 dark:border-slate-700">
                                       No approvals or reviews recorded yet.
                                   </div>
                               ) : (
                                   approvals.map((approval) => (
                                   <div key={approval.id} className="flex gap-3 items-start">
                                       <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-1 ${
-                                      approval.action === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                      approval.action === 'approved' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
                                       }`}>
                                       {approval.action === 'approved' ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
                                       </div>
-                                      <div className="flex-1 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                      <div className="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
                                       <div className="flex items-center justify-between mb-1">
-                                          <p className="text-sm font-bold text-slate-900">{approval.approver?.full_name}</p>
-                                          <span className="text-xs text-slate-400">{new Date(approval.created_at).toLocaleString()}</span>
+                                          <p className="text-sm font-bold text-slate-900 dark:text-white">{approval.approver?.full_name}</p>
+                                          <span className="text-xs text-slate-400 dark:text-slate-500">{new Date(approval.created_at).toLocaleString()}</span>
                                       </div>
-                                      <div className="text-xs text-slate-500 mb-2 capitalize flex items-center gap-1">
+                                      <div className="text-xs text-slate-500 dark:text-slate-400 mb-2 capitalize flex items-center gap-1">
                                           <span className="font-medium">{approval.approver_role.replace('_', ' ')}</span> 
                                           <span>•</span>
                                           <span>{approval.action.replace('_', ' ')}</span>
                                       </div>
                                       {approval.comments && (
-                                          <div className="text-sm text-slate-700">
+                                          <div className="text-sm text-slate-700 dark:text-slate-300">
                                           "{approval.comments}"
                                           </div>
                                       )}
@@ -665,17 +665,17 @@ export const IdeaDetailsPage: React.FC = () => {
                       {activeTab === 'assets' && (
                           <div className="space-y-6 animate-in fade-in slide-in-from-right-2">
                           {idea.status === 'pending_approval' || idea.status === 'draft' ? (
-                              <div className="p-10 text-center bg-amber-50 rounded-xl border border-amber-200">
+                              <div className="p-10 text-center bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-200 dark:border-amber-900/30">
                                   <AlertTriangle className="h-10 w-10 text-amber-500 mx-auto mb-3" />
-                                  <h3 className="font-bold text-amber-800">Concept Not Approved</h3>
-                                  <p className="text-amber-700 text-sm mt-1">Please approve the concept before managing visual assets.</p>
+                                  <h3 className="font-bold text-amber-800 dark:text-amber-400">Concept Not Approved</h3>
+                                  <p className="text-amber-700 dark:text-amber-500 text-sm mt-1">Please approve the concept before managing visual assets.</p>
                               </div>
                           ) : (
                               <>
-                                  <div className="flex justify-between items-center bg-purple-50 p-4 rounded-xl border border-purple-100">
+                                  <div className="flex justify-between items-center bg-purple-50 dark:bg-purple-900/10 p-4 rounded-xl border border-purple-100 dark:border-purple-900/30">
                                       <div>
-                                      <h2 className="text-lg font-bold text-purple-900">Visual Assets</h2>
-                                      <p className="text-sm text-purple-700">Manage final designs/videos.</p>
+                                      <h2 className="text-lg font-bold text-purple-900 dark:text-purple-200">Visual Assets</h2>
+                                      <p className="text-sm text-purple-700 dark:text-purple-400">Manage final designs/videos.</p>
                                       </div>
                                       {canUpload && (
                                       <Button onClick={() => setIsUploadModalOpen(true)} className="bg-purple-600 hover:bg-purple-700 border-transparent shadow-sm">
@@ -697,43 +697,43 @@ export const IdeaDetailsPage: React.FC = () => {
 
                   {/* Right Column: Chat */}
                   <div className="space-y-6 h-full flex flex-col">
-                      <Card className="h-auto max-h-[600px] flex flex-col border-slate-200 shadow-sm">
-                          <div className="p-4 border-b border-slate-100 font-bold text-slate-800 flex items-center justify-between bg-slate-50/50">
+                      <Card className="h-auto max-h-[600px] flex flex-col border-slate-200 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-900">
+                          <div className="p-4 border-b border-slate-100 dark:border-slate-800 font-bold text-slate-800 dark:text-white flex items-center justify-between bg-slate-50/50 dark:bg-slate-900">
                              <div className="flex items-center gap-2">
                                 <MessageSquare className="h-4 w-4" /> Discussion
                              </div>
                           </div>
-                          <div className="flex-1 p-4 space-y-4 overflow-y-auto bg-white min-h-[200px]">
+                          <div className="flex-1 p-4 space-y-4 overflow-y-auto bg-white dark:bg-slate-950 min-h-[200px]">
                           {comments.length === 0 && (
-                              <div className="flex flex-col items-center justify-center h-40 text-slate-400">
+                              <div className="flex flex-col items-center justify-center h-40 text-slate-400 dark:text-slate-600">
                                   <MessageSquare className="h-8 w-8 mb-2 opacity-20" />
                                   <p className="text-sm">No comments yet.</p>
                               </div>
                           )}
                           {comments.map(comment => (
                               <div key={comment.id} className={`flex gap-3 ${comment.user_id === user?.id ? 'flex-row-reverse' : ''}`}>
-                                  <div className="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-bold shrink-0 text-slate-600">
+                                  <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs font-bold shrink-0 text-slate-600 dark:text-slate-300">
                                       {comment.user?.full_name?.[0]}
                                   </div>
                                   <div className={`flex flex-col ${comment.user_id === user?.id ? 'items-end' : 'items-start'} max-w-[85%]`}>
                                       <div className={`px-3 py-2 rounded-2xl text-sm shadow-sm ${
                                       comment.user_id === user?.id 
                                           ? 'bg-primary-600 text-white rounded-tr-none' 
-                                          : 'bg-slate-100 text-slate-700 rounded-tl-none'
+                                          : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-tl-none border border-slate-200 dark:border-slate-700'
                                       }`}>
                                       {comment.content}
                                       </div>
-                                      <span className="text-[10px] text-slate-400 mt-1 px-1">
+                                      <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 px-1">
                                       {new Date(comment.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                       </span>
                                   </div>
                               </div>
                           ))}
                           </div>
-                          <div className="p-3 border-t border-slate-200 bg-slate-50">
+                          <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
                           <form onSubmit={handlePostComment} className="flex gap-2">
                               <input 
-                                  className="flex-1 bg-white border border-slate-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all shadow-sm"
+                                  className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all shadow-sm text-slate-900 dark:text-white placeholder:text-slate-400"
                                   placeholder="Type a message..."
                                   value={newComment}
                                   onChange={e => setNewComment(e.target.value)}
@@ -753,19 +753,20 @@ export const IdeaDetailsPage: React.FC = () => {
        {/* Modals */}
        {isFeedbackModalOpen && (
          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-             <h3 className="text-lg font-bold text-slate-900 mb-2">
+           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6 border border-slate-200 dark:border-slate-700">
+             <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
                {feedbackAction === 'rejected' ? 'Reject Content' : 'Request Changes'}
              </h3>
+             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Provide feedback on what needs to be improved.</p>
              <textarea
-               className="w-full rounded-md border border-slate-300 p-3 text-sm focus:ring-2 focus:ring-primary-500 min-h-[120px] mb-4"
+               className="w-full rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 p-3 text-sm focus:ring-2 focus:ring-primary-500 min-h-[120px] mb-4 text-slate-900 dark:text-white"
                placeholder="Enter your feedback here..."
                value={feedbackComment}
                onChange={e => setFeedbackComment(e.target.value)}
                autoFocus
              />
              <div className="flex justify-end gap-2">
-               <Button variant="ghost" onClick={() => setIsFeedbackModalOpen(false)}>Cancel</Button>
+               <Button variant="ghost" onClick={() => setIsFeedbackModalOpen(false)} className="dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-700">Cancel</Button>
                <Button 
                  onClick={submitFeedback} 
                  isLoading={isActionLoading}
@@ -795,6 +796,7 @@ export const IdeaDetailsPage: React.FC = () => {
                 onSuccess={() => { fetchData(id!, idea.id); addToast('Idea updated successfully', 'success'); }}
                 projectId={idea.project_id}
                 ideaToEdit={idea}
+                projectContext={project} // Pass project context for AI
             />
 
             {/* Manual Task Creation */}

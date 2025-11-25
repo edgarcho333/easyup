@@ -95,13 +95,13 @@ export const OrganizationSwitcher: React.FC<OrganizationSwitcherProps> = ({ coll
       <button 
         onClick={toggleOpen}
         className={`
-          w-full flex items-center transition-all duration-200 border border-slate-200 bg-white hover:border-primary-300 hover:shadow-sm
+          w-full flex items-center transition-all duration-200 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-sm
           ${collapsed ? 'justify-center p-2 rounded-xl aspect-square' : 'justify-between p-2.5 rounded-xl'}
         `}
       >
         <div className="flex items-center gap-3 overflow-hidden">
           <div className={`
-            rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center text-white font-bold shadow-sm shrink-0
+            rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center text-white font-bold shadow-sm shrink-0
             ${collapsed ? 'w-8 h-8 text-xs' : 'w-9 h-9 text-sm'}
           `}>
             {initials}
@@ -109,10 +109,10 @@ export const OrganizationSwitcher: React.FC<OrganizationSwitcherProps> = ({ coll
           
           {!collapsed && (
             <div className="text-left min-w-0">
-              <p className="text-sm font-bold text-slate-900 truncate leading-tight">
+              <p className="text-sm font-bold text-slate-900 dark:text-white truncate leading-tight">
                 {currentOrgName}
               </p>
-              <p className="text-[11px] text-slate-500 truncate font-medium">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate font-medium">
                 {user.currentRole?.replace('_', ' ') || 'Member'}
               </p>
             </div>
@@ -120,18 +120,18 @@ export const OrganizationSwitcher: React.FC<OrganizationSwitcherProps> = ({ coll
         </div>
         
         {!collapsed && (
-          <ChevronsUpDown className="h-4 w-4 text-slate-400 ml-2 shrink-0" />
+          <ChevronsUpDown className="h-4 w-4 text-slate-400 dark:text-slate-500 ml-2 shrink-0" />
         )}
       </button>
 
       {/* Popup Menu */}
       {isOpen && (
-        <div className="absolute top-full left-0 w-64 mt-2 bg-white rounded-xl shadow-2xl border border-slate-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150 origin-top-left">
+        <div className="absolute top-full left-0 w-64 mt-2 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-100 dark:border-slate-700 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150 origin-top-left">
           {isCreating ? (
             <div className="p-3">
               <form onSubmit={handleCreate} className="space-y-3">
                 <div className="flex items-center justify-between">
-                   <p className="text-xs font-bold text-slate-800 uppercase tracking-wider">New Workspace</p>
+                   <p className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">New Workspace</p>
                    {isLoading && <Loader2 className="h-3 w-3 animate-spin text-primary-600" />}
                 </div>
                 
@@ -140,12 +140,12 @@ export const OrganizationSwitcher: React.FC<OrganizationSwitcherProps> = ({ coll
                   placeholder="Company Name" 
                   value={newOrgName}
                   onChange={e => setNewOrgName(e.target.value)}
-                  className="h-9 text-sm"
+                  className="h-9 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                   disabled={isLoading}
                 />
                 
                 {createError && (
-                  <div className="flex items-start gap-1 text-xs text-red-600 bg-red-50 p-2 rounded border border-red-100">
+                  <div className="flex items-start gap-1 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-2 rounded border border-red-100 dark:border-red-800">
                     <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
                     <span className="break-words flex-1">{createError}</span>
                   </div>
@@ -156,7 +156,7 @@ export const OrganizationSwitcher: React.FC<OrganizationSwitcherProps> = ({ coll
                     type="button" 
                     variant="ghost" 
                     size="sm" 
-                    className="h-8 text-xs flex-1" 
+                    className="h-8 text-xs flex-1 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800" 
                     onClick={() => setIsCreating(false)}
                     disabled={isLoading}
                   >
@@ -176,8 +176,8 @@ export const OrganizationSwitcher: React.FC<OrganizationSwitcherProps> = ({ coll
             </div>
           ) : (
             <>
-              <div className="max-h-64 overflow-y-auto py-1">
-                <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <div className="max-h-64 overflow-y-auto py-1 custom-scrollbar">
+                <div className="px-3 py-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                   Switch Workspace
                 </div>
                 {user.organizations && user.organizations.length > 0 ? (
@@ -185,27 +185,27 @@ export const OrganizationSwitcher: React.FC<OrganizationSwitcherProps> = ({ coll
                     <button
                       key={org.id}
                       onClick={() => handleSwitch(org.id)}
-                      className="w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-slate-50 text-slate-700 transition-colors group"
+                      className="w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors group"
                     >
                       <div className="flex items-center gap-3 overflow-hidden">
-                        <Building2 className={`h-4 w-4 shrink-0 ${user.currentOrganization?.id === org.id ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
-                        <span className={`truncate ${user.currentOrganization?.id === org.id ? 'font-semibold text-slate-900' : ''}`}>{org.name}</span>
+                        <Building2 className={`h-4 w-4 shrink-0 ${user.currentOrganization?.id === org.id ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`} />
+                        <span className={`truncate ${user.currentOrganization?.id === org.id ? 'font-semibold text-slate-900 dark:text-white' : ''}`}>{org.name}</span>
                       </div>
                       {user.currentOrganization?.id === org.id && (
-                        <Check className="h-4 w-4 text-primary-600 shrink-0" />
+                        <Check className="h-4 w-4 text-primary-600 dark:text-primary-400 shrink-0" />
                       )}
                     </button>
                   ))
                 ) : (
-                   <div className="px-4 py-4 text-center text-sm text-slate-500">
+                   <div className="px-4 py-4 text-center text-sm text-slate-500 dark:text-slate-400">
                      No organizations found
                    </div>
                 )}
               </div>
-              <div className="border-t border-slate-100 p-2 bg-slate-50/50">
+              <div className="border-t border-slate-100 dark:border-slate-700 p-2 bg-slate-50/50 dark:bg-slate-800/50">
                 <button
                   onClick={() => setIsCreating(true)}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold text-primary-700 bg-white border border-slate-200 hover:border-primary-200 hover:shadow-sm rounded-lg transition-all"
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold text-primary-700 dark:text-primary-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-primary-200 dark:hover:border-primary-700 hover:shadow-sm rounded-lg transition-all"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   <span>Create Organization</span>

@@ -14,10 +14,8 @@ import {
   Camera, 
   Mail, 
   Save, 
-  Loader2, 
   Trash2, 
-  LogOut,
-  Check
+  LogOut
 } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
@@ -121,32 +119,32 @@ export const SettingsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Account Settings</h1>
-          <p className="text-slate-500 mt-1">Manage your profile details and security preferences.</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Account Settings</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Manage your profile details and security preferences.</p>
         </div>
-        <Button variant="outline" onClick={handleLogout} className="text-slate-600 hover:text-red-600 hover:bg-red-50 border-slate-200">
+        <Button variant="outline" onClick={handleLogout} className="text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 border-slate-200 dark:border-slate-700">
           <LogOut className="h-4 w-4 mr-2" /> Sign out
         </Button>
       </div>
 
       {/* Profile Section */}
-      <Card>
+      <Card className="dark:bg-slate-800 dark:border-slate-700">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5 text-primary-600" /> Public Profile
+          <CardTitle className="flex items-center gap-2 dark:text-white">
+            <User className="h-5 w-5 text-primary-600 dark:text-primary-400" /> Public Profile
           </CardTitle>
-          <CardDescription>This information will be displayed to other team members.</CardDescription>
+          <CardDescription className="dark:text-slate-400">This information will be displayed to other team members.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleUpdateProfile} className="flex flex-col md:flex-row gap-8">
             {/* Avatar Upload */}
             <div className="flex flex-col items-center space-y-4">
               <div className="relative group">
-                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg bg-slate-100">
+                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-slate-700 shadow-lg bg-slate-100 dark:bg-slate-800">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-primary-100 text-primary-600 text-4xl font-bold">
+                    <div className="w-full h-full flex items-center justify-center bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-300 text-4xl font-bold">
                       {fullName?.[0]}
                     </div>
                   )}
@@ -162,26 +160,27 @@ export const SettingsPage: React.FC = () => {
                   onChange={handleFileChange}
                 />
               </div>
-              <p className="text-xs text-slate-500">Allowed *.jpeg, *.jpg, *.png, *.gif</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Allowed *.jpeg, *.jpg, *.png, *.gif</p>
             </div>
 
             {/* Inputs */}
             <div className="flex-1 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Full Name</label>
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Full Name</label>
                   <Input 
                     value={fullName} 
                     onChange={e => setFullName(e.target.value)} 
                     placeholder="John Doe"
+                    className="dark:bg-slate-900 dark:border-slate-700 dark:text-white"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Email Address</label>
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Email Address</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <Input 
-                      className="pl-9 bg-slate-50 text-slate-500" 
+                      className="pl-9 bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 dark:border-slate-700" 
                       value={email} 
                       readOnly 
                       disabled
@@ -202,46 +201,49 @@ export const SettingsPage: React.FC = () => {
       </Card>
 
       {/* Security Section */}
-      <Card>
+      <Card className="dark:bg-slate-800 dark:border-slate-700">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-blue-600" /> Security & Password
+          <CardTitle className="flex items-center gap-2 dark:text-white">
+            <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400" /> Security & Password
           </CardTitle>
-          <CardDescription>Ensure your account is secure by using a strong password.</CardDescription>
+          <CardDescription className="dark:text-slate-400">Ensure your account is secure by using a strong password.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleChangePassword} className="space-y-4 max-w-2xl">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Current Password</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Current Password</label>
               <Input 
                 type="password" 
                 value={currentPassword} 
                 onChange={e => setCurrentPassword(e.target.value)}
                 placeholder="••••••••"
+                className="dark:bg-slate-900 dark:border-slate-700 dark:text-white"
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">New Password</label>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">New Password</label>
                 <Input 
                   type="password" 
                   value={newPassword} 
                   onChange={e => setNewPassword(e.target.value)}
                   placeholder="••••••••"
+                  className="dark:bg-slate-900 dark:border-slate-700 dark:text-white"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Confirm New Password</label>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Confirm New Password</label>
                 <Input 
                   type="password" 
                   value={confirmPassword} 
                   onChange={e => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
+                  className="dark:bg-slate-900 dark:border-slate-700 dark:text-white"
                 />
               </div>
             </div>
             <div className="flex justify-end pt-2">
-              <Button variant="outline" type="submit" isLoading={isLoadingPassword} disabled={!currentPassword || !newPassword}>
+              <Button variant="outline" type="submit" isLoading={isLoadingPassword} disabled={!currentPassword || !newPassword} className="dark:border-slate-600 dark:text-slate-200">
                 Update Password
               </Button>
             </div>
@@ -250,45 +252,45 @@ export const SettingsPage: React.FC = () => {
       </Card>
 
       {/* Notifications Section */}
-      <Card>
+      <Card className="dark:bg-slate-800 dark:border-slate-700">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 dark:text-white">
             <Bell className="h-5 w-5 text-amber-500" /> Notifications
           </CardTitle>
-          <CardDescription>Choose how you want to be notified about project updates.</CardDescription>
+          <CardDescription className="dark:text-slate-400">Choose how you want to be notified about project updates.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4 divide-y divide-slate-100">
+          <div className="space-y-4 divide-y divide-slate-100 dark:divide-slate-700">
             <div className="flex items-center justify-between py-2">
               <div>
-                <p className="font-medium text-slate-900">Email Notifications</p>
-                <p className="text-xs text-slate-500">Receive emails about task assignments and approvals.</p>
+                <p className="font-medium text-slate-900 dark:text-slate-200">Email Notifications</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Receive emails about task assignments and approvals.</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" className="sr-only peer" checked={emailNotifs} onChange={e => setEmailNotifs(e.target.checked)} />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-900 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
               </label>
             </div>
 
             <div className="flex items-center justify-between py-4">
               <div>
-                <p className="font-medium text-slate-900">Browser Push Notifications</p>
-                <p className="text-xs text-slate-500">Get real-time popups when you are online.</p>
+                <p className="font-medium text-slate-900 dark:text-slate-200">Browser Push Notifications</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Get real-time popups when you are online.</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" className="sr-only peer" checked={pushNotifs} onChange={e => setPushNotifs(e.target.checked)} />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-900 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
               </label>
             </div>
 
             <div className="flex items-center justify-between py-4">
               <div>
-                <p className="font-medium text-slate-900">Marketing & Tips</p>
-                <p className="text-xs text-slate-500">Receive news about new features and tips.</p>
+                <p className="font-medium text-slate-900 dark:text-slate-200">Marketing & Tips</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Receive news about new features and tips.</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" className="sr-only peer" checked={marketingEmails} onChange={e => setMarketingEmails(e.target.checked)} />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-900 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
               </label>
             </div>
           </div>
@@ -296,17 +298,17 @@ export const SettingsPage: React.FC = () => {
       </Card>
 
       {/* Danger Zone */}
-      <Card className="border-red-100 overflow-hidden">
-        <CardHeader className="bg-red-50/50 border-b border-red-100">
-          <CardTitle className="flex items-center gap-2 text-red-700">
+      <Card className="border-red-100 dark:border-red-900/30 overflow-hidden bg-white dark:bg-slate-800">
+        <CardHeader className="bg-red-50/50 dark:bg-red-900/10 border-b border-red-100 dark:border-red-900/30">
+          <CardTitle className="flex items-center gap-2 text-red-700 dark:text-red-400">
             <Lock className="h-5 w-5" /> Danger Zone
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-bold text-slate-900">Delete Account</p>
-              <p className="text-sm text-slate-500">Permanently remove your account and all of its data.</p>
+              <p className="font-bold text-slate-900 dark:text-slate-200">Delete Account</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Permanently remove your account and all of its data.</p>
             </div>
             <Button variant="destructive" onClick={() => addToast('Account deletion is disabled for demo users.', 'info')}>
               <Trash2 className="h-4 w-4 mr-2" /> Delete Account
