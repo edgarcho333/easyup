@@ -1,36 +1,32 @@
+import { createClient } from '@supabase/supabase-js';
+import { Database } from '../types/database';
 
-// MOCK MODE: Supabase client is disabled.
-// All data is handled by lib/mockDb.ts locally.
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = {
-  from: () => {
-    console.warn("Supabase is disabled. Use mockDb instead.");
-    return {
-      select: () => ({ data: [], error: null }),
-      insert: () => ({ data: null, error: null }),
-      update: () => ({ data: null, error: null }),
-      delete: () => ({ data: null, error: null }),
-      eq: () => ({ select: () => ({ data: [], error: null }) })
-    };
-  },
-  auth: {
-    getSession: async () => ({ data: { session: null }, error: null }),
-    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-    signInWithPassword: async () => ({ data: {}, error: null }),
-    signUp: async () => ({ data: {}, error: null }),
-    signOut: async () => ({ error: null }),
-    getUser: async () => ({ data: { user: null } }),
-  },
-  storage: {
-    from: () => ({
-      upload: async () => ({ error: null }),
-      getPublicUrl: () => ({ data: { publicUrl: 'https://via.placeholder.com/300' } })
-    })
-  },
-  channel: () => ({
-    on: () => ({ on: () => ({ subscribe: () => {} }) }),
-    subscribe: () => {},
-    unsubscribe: () => {}
-  }),
-  removeChannel: () => {}
-};
+console.log('🔧 [Supabase] Initializing client...');
+console.log('🔧 [Supabase] URL:', supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'NOT SET');
+console.log('🔧 [Supabase] Key:', supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : 'NOT SET');
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('❌ Supabase credentials not found in environment variables.');
+  console.error('Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.local');
+}
+
+// Create Supabase client
+export const supabase = createClient<Database>(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-key',
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storage: window.localStorage,
+      storageKey: 'supabase.auth.token',
+      flowType: 'pkce'
+    }
+  }
+);
+
+console.log('✅ [Supabase] Client initialized');

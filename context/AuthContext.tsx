@@ -1,8 +1,8 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
-import { AuthState, CurrentUser, UserRoleName } from '../types';
-import { mockDb } from '../lib/mockDb';
-import { organizationService } from '../services/organizationService';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { AuthState, CurrentUser } from '../types';
+import { authService } from '../services/authService';
+import { supabase } from '../lib/supabase';
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
@@ -27,160 +27,135 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
     localStorage.getItem('easyup_last_org_id')
   );
 
-  // Helper to build the full user object with joins
-  const buildUser = (userRecord: any, preferredOrgId?: string | null): CurrentUser => {
-    // Get memberships
-    const memberships = mockDb.filter('user_organizations', (uo: any) => uo.user_id === userRecord.id && uo.status === 'active');
-    
-    // Get organizations details
-    const organizations = memberships.map((m: any) => {
-      const org = mockDb.find('organizations', (o: any) => o.id === m.organization_id);
-      return org;
-    }).filter(Boolean);
-
-    let currentMembership: any = null;
-    let currentOrg: any = null;
-
-    if (organizations.length > 0) {
-      // Try to find preferred
-      if (preferredOrgId) {
-        currentOrg = organizations.find((o: any) => o.id === preferredOrgId);
-        if (currentOrg) {
-          currentMembership = memberships.find((m: any) => m.organization_id === preferredOrgId);
-        }
-      }
-
-      // Fallback to first
-      if (!currentOrg) {
-        currentOrg = organizations[0];
-        currentMembership = memberships[0];
-        if (currentOrg) {
-          localStorage.setItem('easyup_last_org_id', currentOrg.id);
-        }
-      }
-    }
-
-    // Get Role Name
-    let roleName: UserRoleName | null = null;
-    if (currentMembership) {
-      const role = mockDb.find('roles', (r: any) => r.id === currentMembership.role_id);
-      if (role) roleName = role.name as UserRoleName;
-    }
-
-    return {
-      id: userRecord.id,
-      email: userRecord.email,
-      full_name: userRecord.full_name,
-      avatar_url: userRecord.avatar_url,
-      currentOrganization: currentOrg || null,
-      currentRole: roleName,
-      currentMembershipId: currentMembership?.id || null,
-      organizations: organizations as any[],
-    };
-  };
-
-  // Load session from localStorage on mount
+  // Load session from Supabase on mount
   useEffect(() => {
-    const loadSession = async () => {
-      const storedUserId = localStorage.getItem('easyup_session_user_id');
-      
-      if (storedUserId) {
-        const userRecord = mockDb.find('users', (u: any) => u.id === storedUserId);
-        if (userRecord) {
-          const currentUser = buildUser(userRecord, selectedOrgId);
-          setState({
-            user: currentUser,
-            isAuthenticated: true,
-            isLoading: false
-          });
-          return;
+    console.log('🔵 [AuthContext] Initializing auth listener...');
+    let isInitialLoad = true;
+
+    // Listen for auth state changes (this handles initial session load too)
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔵 [AuthContext] Auth state changed:', event);
+
+      // Handle INITIAL_SESSION (on page load/refresh)
+      if (event === 'INITIAL_SESSION') {
+        isInitialLoad = false;
+        if (session?.user) {
+          console.log('✅ [AuthContext] Initial session exists, building user...');
+          try {
+            const currentUser = await authService.getCurrentUser();
+            if (currentUser) {
+              console.log('✅ [AuthContext] User built successfully');
+              setState({
+                user: currentUser,
+                isAuthenticated: true,
+                isLoading: false
+              });
+            } else {
+              setState({ user: null, isAuthenticated: false, isLoading: false });
+            }
+          } catch (error) {
+            console.error('❌ [AuthContext] Error building user:', error);
+            setState({ user: null, isAuthenticated: false, isLoading: false });
+          }
+        } else {
+          console.log('⚠️ [AuthContext] No initial session');
+          setState({ user: null, isAuthenticated: false, isLoading: false });
         }
       }
+      // Handle SIGNED_IN (after login/register, but NOT on initial load)
+      else if (event === 'SIGNED_IN' && !isInitialLoad) {
+        if (session?.user) {
+          console.log('✅ [AuthContext] User signed in, building user...');
+          try {
+            const currentUser = await authService.getCurrentUser();
+            if (currentUser) {
+              console.log('✅ [AuthContext] User built successfully after sign in');
+              setState({
+                user: currentUser,
+                isAuthenticated: true,
+                isLoading: false
+              });
+            }
+          } catch (error) {
+            console.error('❌ [AuthContext] Error building user after sign in:', error);
+            setState({ user: null, isAuthenticated: false, isLoading: false });
+          }
+        }
+      }
+      // Handle SIGNED_OUT
+      else if (event === 'SIGNED_OUT') {
+        console.log('⚠️ [AuthContext] User signed out');
+        setState({ user: null, isAuthenticated: false, isLoading: false });
+      }
+    });
 
-      // No session found
-      setState({ user: null, isAuthenticated: false, isLoading: false });
+    // Cleanup listener on unmount
+    return () => {
+      authListener.subscription.unsubscribe();
     };
-
-    // Simulate a small delay for "loading"
-    setTimeout(loadSession, 500);
   }, []);
 
   // Handle Org Switch Effect
   useEffect(() => {
-    if (state.user && selectedOrgId && state.user.currentOrganization?.id !== selectedOrgId) {
-      // Rebuild user with new org
-      const rawUser = mockDb.find('users', (u: any) => u.id === state.user!.id);
-      if (rawUser) {
-        const updatedUser = buildUser(rawUser, selectedOrgId);
-        setState(prev => ({ ...prev, user: updatedUser }));
+    const switchOrg = async () => {
+      if (state.user && selectedOrgId && state.user.currentOrganization?.id !== selectedOrgId) {
+        try {
+          // Refresh user with new selected org
+          const updatedUser = await authService.getCurrentUser();
+          if (updatedUser) {
+            setState(prev => ({ ...prev, user: updatedUser }));
+          }
+        } catch (error) {
+          console.error('Error switching organization:', error);
+        }
       }
-    }
+    };
+
+    switchOrg();
   }, [selectedOrgId]);
 
-  const login = async (email: string, pass: string) => {
-    // Simulating auth check
-    const userRecord = mockDb.find('users', (u: any) => u.email === email);
-    
-    if (!userRecord) {
-      throw new Error('Invalid credentials');
+  const login = async (email: string, password: string) => {
+    try {
+      const currentUser = await authService.login(email, password);
+      setState({ user: currentUser, isAuthenticated: true, isLoading: false });
+    } catch (error: any) {
+      throw new Error(error.message || 'Login failed');
     }
-
-    // In a real mock, we might check password, but for now we trust email
-    localStorage.setItem('easyup_session_user_id', userRecord.id);
-    
-    const currentUser = buildUser(userRecord, selectedOrgId);
-    setState({ user: currentUser, isAuthenticated: true, isLoading: false });
   };
 
-  const register = async (email: string, pass: string, name: string, orgName: string) => {
-    // Check if exists
-    const existing = mockDb.find('users', (u: any) => u.email === email);
-    if (existing) throw new Error('User already exists');
-
-    // Create User
-    const newUser = mockDb.insert<any>('users', {
-      email,
-      full_name: name,
-      password_hash: 'mock_hash', // dummy
-    });
-
-    // Create Org
-    if (orgName) {
-      await organizationService.createOrganization(orgName, newUser.id);
+  const register = async (email: string, password: string, fullName: string, orgName: string) => {
+    try {
+      const currentUser = await authService.register(email, password, fullName, orgName);
+      setState({ user: currentUser, isAuthenticated: true, isLoading: false });
+    } catch (error: any) {
+      throw new Error(error.message || 'Registration failed');
     }
-
-    // Auto-Join Invitation Logic (Mock Trigger)
-    const pendingInvites = mockDb.filter('invitations', (i: any) => i.email === email && i.status === 'pending');
-    pendingInvites.forEach((invite: any) => {
-      mockDb.insert('user_organizations', {
-        user_id: newUser.id,
-        organization_id: invite.organization_id,
-        role_id: invite.role_id,
-        invited_by: invite.invited_by,
-        status: 'active',
-        joined_at: new Date().toISOString()
-      });
-      mockDb.update('invitations', invite.id, { status: 'accepted' });
-    });
-
-    // Login immediately
-    localStorage.setItem('easyup_session_user_id', newUser.id);
-    const currentUser = buildUser(newUser, null);
-    setState({ user: currentUser, isAuthenticated: true, isLoading: false });
   };
 
   const logout = async () => {
-    localStorage.removeItem('easyup_session_user_id');
-    localStorage.removeItem('easyup_last_org_id');
-    setState({ user: null, isAuthenticated: false, isLoading: false });
+    try {
+      await authService.logout();
+      localStorage.removeItem('easyup_last_org_id');
+      setState({ user: null, isAuthenticated: false, isLoading: false });
+    } catch (error: any) {
+      console.error('Logout error:', error);
+    }
   };
-  
+
   const resetPassword = async (email: string) => {
-    console.log(`Mock password reset email sent to ${email}`);
+    try {
+      await authService.resetPassword(email);
+    } catch (error: any) {
+      throw new Error(error.message || 'Password reset failed');
+    }
   };
 
   const updatePassword = async (password: string) => {
-    console.log('Mock password updated');
+    try {
+      await authService.updatePassword(password);
+    } catch (error: any) {
+      throw new Error(error.message || 'Password update failed');
+    }
   };
 
   const switchOrganization = (orgId: string) => {
@@ -190,16 +165,28 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
 
   const refreshProfile = async () => {
     if (state.user) {
-      const rawUser = mockDb.find('users', (u: any) => u.id === state.user!.id);
-      if (rawUser) {
-        const updatedUser = buildUser(rawUser, selectedOrgId);
-        setState(prev => ({ ...prev, user: updatedUser }));
+      try {
+        const updatedUser = await authService.getCurrentUser();
+        if (updatedUser) {
+          setState(prev => ({ ...prev, user: updatedUser }));
+        }
+      } catch (error) {
+        console.error('Error refreshing profile:', error);
       }
     }
   };
 
   return (
-    <AuthContext.Provider value={{ ...state, login, register, logout, resetPassword, updatePassword, switchOrganization, refreshProfile }}>
+    <AuthContext.Provider value={{
+      ...state,
+      login,
+      register,
+      logout,
+      resetPassword,
+      updatePassword,
+      switchOrganization,
+      refreshProfile
+    }}>
       {children}
     </AuthContext.Provider>
   );

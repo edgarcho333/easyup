@@ -60,7 +60,7 @@ export const LoginPage: React.FC = () => {
           />
           <div className="space-y-1">
             <div className="flex items-center justify-between">
-              <label htmlFor="password" class="text-sm font-medium leading-none text-slate-700 dark:text-slate-300">
+              <label htmlFor="password" className="text-sm font-medium leading-none text-slate-700 dark:text-slate-300">
                 Password
               </label>
               <Link 

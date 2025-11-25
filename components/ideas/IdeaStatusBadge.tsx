@@ -15,6 +15,10 @@ const statusConfig: Record<IdeaStatus, { color: string; label: string }> = {
 
 export const IdeaStatusBadge: React.FC<{ status: IdeaStatus }> = ({ status }) => {
   const config = statusConfig[status] || statusConfig.draft;
-  
+
   return (
     <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide ${config.color}`}>
+      {config.label}
+    </span>
+  );
+};

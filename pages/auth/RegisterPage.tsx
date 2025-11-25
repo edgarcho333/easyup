@@ -14,14 +14,14 @@ export const RegisterPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     if (password.length < 8) {
       setError('Password must be at least 8 characters long');
       return;
@@ -58,3 +58,56 @@ export const RegisterPage: React.FC = () => {
           <div className="grid grid-cols-1 gap-4">
             <Input
               id="fullName"
+              type="text"
+              label="Full Name"
+              placeholder="John Doe"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+              className="dark:bg-slate-950 dark:border-slate-800 dark:text-white"
+            />
+            <Input
+              id="orgName"
+              type="text"
+              label="Organization Name"
+              placeholder="ACME Marketing"
+              value={orgName}
+              onChange={(e) => setOrgName(e.target.value)}
+              required
+              className="dark:bg-slate-950 dark:border-slate-800 dark:text-white"
+            />
+            <Input
+              id="email"
+              type="email"
+              label="Email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="dark:bg-slate-950 dark:border-slate-800 dark:text-white"
+            />
+            <Input
+              id="password"
+              type="password"
+              label="Password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="dark:bg-slate-950 dark:border-slate-800 dark:text-white"
+            />
+          </div>
+          <Button type="submit" className="w-full" isLoading={isLoading}>
+            Create account
+          </Button>
+        </form>
+      </CardContent>
+      <CardFooter className="justify-center text-sm text-slate-600 dark:text-slate-400">
+        Already have an account?{' '}
+        <Link to="/login" className="ml-1 font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-500 hover:underline">
+          Sign in
+        </Link>
+      </CardFooter>
+    </Card>
+  );
+};

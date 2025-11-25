@@ -500,7 +500,7 @@ export const AnalyticsPage: React.FC = () => {
                           <AlertTriangle className="h-5 w-5" />
                        </div>
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">8 tasks pending review > 2 days</p>
+                    <p className="text-xs text-slate-500 mt-2">8 tasks pending review &gt; 2 days</p>
                  </CardContent>
               </Card>
            </div>
