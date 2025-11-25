@@ -86,11 +86,23 @@ export const chatService = {
     })).sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   },
 
-  async sendMessage(conversationId: string, userId: string, content: string): Promise<Message> {
+  async sendMessage(conversationId: string, userId: string, content: string, file?: File): Promise<Message> {
+    let attachmentData = {};
+    if (file) {
+        // Mock upload: in a real app, this would upload to storage and get a URL
+        const url = URL.createObjectURL(file);
+        attachmentData = {
+            attachment_url: url,
+            attachment_name: file.name,
+            attachment_type: file.type.startsWith('image/') ? 'image' : 'file'
+        };
+    }
+
     const msg = mockDb.insert<Message>('messages', {
         conversation_id: conversationId,
         user_id: userId,
-        content
+        content,
+        ...attachmentData
     });
 
     mockDb.update('conversations', conversationId, { last_message_at: new Date().toISOString() });

@@ -49,24 +49,24 @@ export const AssetUploadModal: React.FC<AssetUploadModalProps> = ({ isOpen, onCl
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
-        <div className="flex items-center justify-between p-6 border-b border-slate-100">
-          <h3 className="text-xl font-bold text-slate-900">Upload Asset</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-500">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md border border-slate-200 dark:border-slate-800">
+        <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Upload Asset</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-500 dark:hover:text-slate-300">
             <X className="h-6 w-6" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-md border border-red-100">
+            <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-md border border-red-100 dark:border-red-800">
               {error}
             </div>
           )}
 
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">File</label>
-            <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${file ? 'border-green-300 bg-green-50' : 'border-slate-300 hover:border-primary-400'}`}>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">File</label>
+            <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${file ? 'border-green-300 bg-green-50 dark:bg-green-900/20 dark:border-green-800' : 'border-slate-300 dark:border-slate-700 hover:border-primary-400 dark:hover:border-primary-600 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
               <input 
                 type="file" 
                 id="asset-file" 
@@ -78,13 +78,13 @@ export const AssetUploadModal: React.FC<AssetUploadModalProps> = ({ isOpen, onCl
                 {file ? (
                   <>
                     <CheckCircle className="h-8 w-8 text-green-500 mb-2" />
-                    <span className="text-sm font-medium text-green-700">{file.name}</span>
-                    <span className="text-xs text-green-600">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                    <span className="text-sm font-medium text-green-700 dark:text-green-400">{file.name}</span>
+                    <span className="text-xs text-green-600 dark:text-green-500">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
                   </>
                 ) : (
                   <>
                     <Upload className="h-8 w-8 text-slate-400 mb-2" />
-                    <span className="text-sm font-medium text-slate-600">Click to upload image or video</span>
+                    <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Click to upload image or video</span>
                     <span className="text-xs text-slate-400 mt-1">Max 20MB</span>
                   </>
                 )}
@@ -93,9 +93,9 @@ export const AssetUploadModal: React.FC<AssetUploadModalProps> = ({ isOpen, onCl
           </div>
 
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700">Notes (Optional)</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Notes (Optional)</label>
             <textarea
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 min-h-[80px]"
+              className="w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 min-h-[80px]"
               placeholder="e.g. Updated color scheme based on feedback..."
               value={notes}
               onChange={e => setNotes(e.target.value)}
@@ -103,7 +103,7 @@ export const AssetUploadModal: React.FC<AssetUploadModalProps> = ({ isOpen, onCl
           </div>
 
           <div className="pt-2 flex gap-3">
-            <Button variant="ghost" type="button" onClick={onClose} className="flex-1">Cancel</Button>
+            <Button variant="ghost" type="button" onClick={onClose} className="flex-1 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800">Cancel</Button>
             <Button type="submit" isLoading={isLoading} disabled={!file} className="flex-1">Upload</Button>
           </div>
         </form>

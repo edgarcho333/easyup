@@ -1,6 +1,6 @@
 
 import { mockDb } from '../lib/mockDb';
-import { IdeaAsset, AssetReview } from '../types';
+import { IdeaAsset, AssetReview, AssetAnnotation } from '../types';
 
 export const assetService = {
   async uploadAsset(
@@ -66,5 +66,37 @@ export const assetService = {
         ...r,
         reviewer: mockDb.find('users', (u: any) => u.id === r.reviewer_id)
     })).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  },
+
+  // --- ANNOTATIONS ---
+  
+  async addAnnotation(assetId: string, userId: string, x: number, y: number, comment: string): Promise<AssetAnnotation> {
+    const annotation = mockDb.insert<AssetAnnotation>('asset_annotations', {
+      asset_id: assetId,
+      user_id: userId,
+      x,
+      y,
+      comment,
+      is_resolved: false
+    });
+    
+    const user = mockDb.find('users', (u: any) => u.id === userId);
+    return { ...annotation, user };
+  },
+
+  async getAnnotations(assetId: string): Promise<AssetAnnotation[]> {
+    const annotations = mockDb.filter('asset_annotations', (a: any) => a.asset_id === assetId);
+    return annotations.map((a: any) => ({
+      ...a,
+      user: mockDb.find('users', (u: any) => u.id === a.user_id)
+    })).sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  },
+
+  async resolveAnnotation(annotationId: string): Promise<void> {
+    mockDb.update('asset_annotations', annotationId, { is_resolved: true });
+  },
+
+  async deleteAnnotation(annotationId: string): Promise<void> {
+    mockDb.delete('asset_annotations', annotationId);
   }
 };

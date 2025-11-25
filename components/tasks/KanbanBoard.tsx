@@ -14,10 +14,10 @@ interface KanbanBoardProps {
 }
 
 const COLUMNS: { id: TaskStatus; label: string; icon: any; color: string, bg: string, border: string }[] = [
-  { id: 'todo', label: 'To Do', icon: Circle, color: 'text-slate-500', bg: 'bg-slate-50', border: 'border-slate-200' },
-  { id: 'in_progress', label: 'In Progress', icon: Clock, color: 'text-blue-500', bg: 'bg-blue-50/50', border: 'border-blue-100' },
-  { id: 'review', label: 'Review', icon: AlertCircle, color: 'text-amber-500', bg: 'bg-amber-50/50', border: 'border-amber-100' },
-  { id: 'done', label: 'Done', icon: CheckCircle2, color: 'text-green-500', bg: 'bg-green-50/50', border: 'border-green-100' },
+  { id: 'todo', label: 'To Do', icon: Circle, color: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-50/50 dark:bg-slate-900/30', border: 'border-slate-200 dark:border-slate-800' },
+  { id: 'in_progress', label: 'In Progress', icon: Clock, color: 'text-blue-500', bg: 'bg-blue-50/30 dark:bg-blue-900/10', border: 'border-blue-100 dark:border-blue-900/30' },
+  { id: 'review', label: 'Review', icon: AlertCircle, color: 'text-amber-500', bg: 'bg-amber-50/30 dark:bg-amber-900/10', border: 'border-amber-100 dark:border-amber-900/30' },
+  { id: 'done', label: 'Done', icon: CheckCircle2, color: 'text-green-500', bg: 'bg-green-50/30 dark:bg-green-900/10', border: 'border-green-100 dark:border-green-900/30' },
 ];
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId, refreshTrigger, onTaskClick, assigneeIdFilter }) => {
@@ -93,7 +93,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId, refreshTrig
   };
   
   const filteredTasks = assigneeIdFilter 
-     ? tasks.filter(t => t.assigned_to === assigneeIdFilter)
+     ? tasks.filter(t => t.assigned_to && t.assigned_to.includes(assigneeIdFilter))
      : tasks;
 
   const openCreateModal = (status: TaskStatus) => {
@@ -122,18 +122,18 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId, refreshTrig
               {/* Column Header */}
               <div className="p-4 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <div className={`p-1.5 rounded-lg bg-white shadow-sm`}>
+                  <div className={`p-1.5 rounded-lg bg-white dark:bg-slate-800 shadow-sm`}>
                      <Icon className={`h-4 w-4 ${col.color}`} />
                   </div>
-                  <span className="font-bold text-slate-700">{col.label}</span>
-                  <span className="px-2 py-0.5 rounded-full bg-white/60 text-slate-500 text-xs font-medium border border-slate-100">
+                  <span className="font-bold text-slate-700 dark:text-slate-200">{col.label}</span>
+                  <span className="px-2 py-0.5 rounded-full bg-white/60 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 text-xs font-medium border border-slate-100 dark:border-slate-700">
                     {colTasks.length}
                   </span>
                 </div>
                 <button 
                   type="button"
                   onClick={() => openCreateModal(col.id)} 
-                  className="text-slate-400 hover:text-slate-700 hover:bg-white/80 p-1.5 rounded-md transition-all"
+                  className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/80 dark:hover:bg-slate-800/80 p-1.5 rounded-md transition-all"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
@@ -157,7 +157,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId, refreshTrig
                   </div>
                 ))}
                 {colTasks.length === 0 && (
-                  <div className="h-32 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200/50 rounded-xl">
+                  <div className="h-32 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200/50 dark:border-slate-700/50 rounded-xl">
                      <p className="text-xs font-medium">No tasks</p>
                      <button onClick={() => openCreateModal(col.id)} className="mt-2 text-xs text-primary-600 font-medium hover:underline">
                        + Create one
@@ -171,7 +171,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({ projectId, refreshTrig
                  <button 
                     type="button"
                     onClick={() => openCreateModal(col.id)}
-                    className="w-full py-2.5 flex items-center justify-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-white/60 rounded-xl transition-all border border-transparent hover:border-slate-200 hover:shadow-sm"
+                    className="w-full py-2.5 flex items-center justify-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800/60 rounded-xl transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:shadow-sm"
                  >
                     <Plus className="h-3.5 w-3.5" /> Add Task
                  </button>

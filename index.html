@@ -11,6 +11,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
+        darkMode: 'class',
         theme: {
           extend: {
             fontFamily: {
@@ -35,6 +36,35 @@
         }
       }
     </script>
+    <style>
+      /* Custom Scrollbar Styling */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: rgba(156, 163, 175, 0.5); /* slate-400 with opacity */
+        border-radius: 20px;
+      }
+      .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: rgba(71, 85, 105, 0.5); /* slate-600 with opacity */
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(156, 163, 175, 0.8);
+      }
+      
+      /* Utility to hide scrollbar but allow scrolling */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+      }
+    </style>
   <script type="importmap">
 {
   "imports": {
@@ -47,12 +77,13 @@
     "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.39.3",
     "recharts": "https://esm.sh/recharts@2.12.2?external=react,react-dom",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/"
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0"
   }
 }
 </script>
 </head>
-  <body class="bg-slate-50 text-slate-900 font-sans antialiased">
+  <body class="bg-slate-50 text-slate-900 font-sans antialiased dark:bg-slate-950 dark:text-slate-50">
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
   </body>

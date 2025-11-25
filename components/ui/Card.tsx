@@ -1,4 +1,3 @@
-
 import React, { ReactNode, HTMLAttributes } from 'react';
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
@@ -8,7 +7,7 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 
 export const Card: React.FC<CardProps> = ({ children, className = '', ...props }) => {
   return (
-    <div className={`rounded-xl border border-slate-200 bg-white text-slate-950 shadow-sm ${className}`} {...props}>
+    <div className={`rounded-xl border border-slate-200 bg-white text-slate-950 shadow-sm dark:bg-slate-900 dark:border-slate-800 dark:text-slate-50 ${className}`} {...props}>
       {children}
     </div>
   );
@@ -19,11 +18,11 @@ export const CardHeader: React.FC<CardProps> = ({ children, className = '' }) =>
 );
 
 export const CardTitle: React.FC<CardProps> = ({ children, className = '' }) => (
-  <h3 className={`font-semibold leading-none tracking-tight text-lg ${className}`}>{children}</h3>
+  <h3 className={`font-semibold leading-none tracking-tight text-lg text-slate-900 dark:text-slate-50 ${className}`}>{children}</h3>
 );
 
 export const CardDescription: React.FC<CardProps> = ({ children, className = '' }) => (
-  <p className={`text-sm text-slate-500 ${className}`}>{children}</p>
+  <p className={`text-sm text-slate-500 dark:text-slate-400 ${className}`}>{children}</p>
 );
 
 export const CardContent: React.FC<CardProps> = ({ children, className = '' }) => (
