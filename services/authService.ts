@@ -43,6 +43,8 @@ export const authService = {
     fullName: string,
     orgName: string
   ): Promise<CurrentUser> {
+    console.log('🔵 Starting registration...', { email, fullName, orgName });
+
     // Create user in Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
@@ -55,31 +57,22 @@ export const authService = {
     });
 
     if (authError) {
-      console.error('Registration failed:', authError.message);
+      console.error('❌ Auth signup error:', authError);
       throw new Error(authError.message);
     }
 
     if (!authData.user) {
+      console.error('❌ No user returned from registration');
       throw new Error('No user returned from registration');
     }
 
     const userId = authData.user.id;
-
-    // Insert into public.users table (manual sync since we can't use auth triggers)
-    const { error: userError } = await supabase
-      .from('users')
-      .insert({
-        id: userId,
-        email: authData.user.email!,
-        full_name: fullName,
-      });
-
-    if (userError) {
-      console.error('Failed to create user profile:', userError.message);
-      // Don't throw - auth user was created successfully, this is just profile sync
-    }
+    console.log('✅ User created in Supabase Auth:', userId);
 
     // Create organization in Supabase
+    console.log('🔵 Creating organization...', { name: orgName, owner_id: userId });
+
+    // Generate org ID manually to avoid .select() which triggers SELECT policy recursion
     const orgId = crypto.randomUUID();
 
     const { error: orgError } = await supabase
@@ -92,7 +85,8 @@ export const authService = {
       });
 
     if (orgError) {
-      console.error('Failed to create organization:', orgError.message);
+      console.error('❌ Organization creation error:', orgError);
+      console.error('Error details:', JSON.stringify(orgError, null, 2));
       throw new Error(`Failed to create organization: ${orgError.message}`);
     }
 
@@ -106,7 +100,10 @@ export const authService = {
       updated_at: new Date().toISOString()
     };
 
+    console.log('✅ Organization created:', orgData);
+
     // Find super_admin role
+    console.log('🔵 Finding super_admin role...');
     const { data: roleData, error: roleError } = await supabase
       .from('roles')
       .select('*')
@@ -114,11 +111,14 @@ export const authService = {
       .single();
 
     if (roleError || !roleData) {
-      console.error('Failed to find super_admin role:', roleError?.message);
+      console.error('❌ Role fetch error:', roleError);
       throw new Error('Super admin role not found');
     }
 
+    console.log('✅ Role found:', roleData);
+
     // Create user-organization relationship
+    console.log('🔵 Creating user-organization membership...');
     const { error: membershipError } = await supabase
       .from('user_organizations')
       .insert({
@@ -129,9 +129,11 @@ export const authService = {
       });
 
     if (membershipError) {
-      console.error('Failed to create membership:', membershipError.message);
+      console.error('❌ Membership creation error:', membershipError);
       throw new Error(`Failed to create membership: ${membershipError.message}`);
     }
+
+    console.log('✅ Membership created successfully');
 
     // Build and return CurrentUser
     return {
@@ -197,21 +199,37 @@ export const authService = {
    * Get current user
    */
   async getCurrentUser(): Promise<CurrentUser | null> {
+    console.log('🔵 [authService] getCurrentUser() called');
+
     try {
-      const { data, error } = await supabase.auth.getUser();
+      console.log('🔵 [authService] Calling supabase.auth.getUser()...');
+
+      // Add timeout to detect hanging promises
+      const getUserPromise = supabase.auth.getUser();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('getUser() timeout after 5s')), 5000)
+      );
+
+      const { data, error } = await Promise.race([getUserPromise, timeoutPromise]) as any;
+
+      console.log('🔵 [authService] getUser() returned:', { hasData: !!data, hasError: !!error, hasUser: !!data?.user });
 
       if (error) {
-        console.error('Failed to get user:', error.message);
+        console.error('❌ [authService] getUser() error:', error);
         return null;
       }
 
       if (!data.user) {
+        console.log('⚠️ [authService] No user in session');
         return null;
       }
 
-      return buildCurrentUser(data.user.id, data.user.email!);
+      console.log('✅ [authService] User found in session:', data.user.id, data.user.email);
+      const result = await buildCurrentUser(data.user.id, data.user.email!);
+      console.log('✅ [authService] buildCurrentUser completed');
+      return result;
     } catch (err) {
-      console.error('Error in getCurrentUser:', err);
+      console.error('❌ [authService] Unexpected error in getCurrentUser:', err);
       return null;
     }
   },
@@ -222,12 +240,16 @@ export const authService = {
  * Fetches all data from Supabase tables
  */
 async function buildCurrentUser(userId: string, email: string): Promise<CurrentUser> {
+  console.log('🔵 Building current user...', { userId, email });
+
   // Get user metadata from Supabase Auth
   const { data: userData } = await supabase.auth.getUser();
   const fullName = userData?.user?.user_metadata?.full_name || '';
   const avatarUrl = userData?.user?.user_metadata?.avatar_url;
+  console.log('✅ User metadata:', { fullName, avatarUrl });
 
   // Get user's organization memberships with roles (JOIN query)
+  console.log('🔵 Fetching memberships for user:', userId);
   const { data: memberships, error: membershipError } = await supabase
     .from('user_organizations')
     .select(`
@@ -252,22 +274,29 @@ async function buildCurrentUser(userId: string, email: string): Promise<CurrentU
     .eq('status', 'active');
 
   if (membershipError) {
-    console.error('Failed to fetch memberships:', membershipError.message);
+    console.error('❌ Membership fetch error:', membershipError);
     throw new Error(`Failed to fetch memberships: ${membershipError.message}`);
   }
 
+  console.log('✅ Memberships fetched:', memberships);
+
   if (!memberships || memberships.length === 0) {
+    console.error('❌ No organizations found for user');
     throw new Error('No organizations found for user');
   }
 
   // Extract organizations
   const organizations = memberships.map((m: any) => m.organizations).filter(Boolean);
+  console.log('✅ Organizations extracted:', organizations);
 
   // Get current organization (from localStorage or first one)
   const lastOrgId = localStorage.getItem('easyup_last_org_id');
+  console.log('🔵 Last org ID from localStorage:', lastOrgId);
+
   let currentMembership = memberships.find((m: any) => m.organization_id === lastOrgId);
 
   if (!currentMembership) {
+    console.log('⚠️ Last org not found, using first membership');
     currentMembership = memberships[0];
     if (currentMembership?.organization_id) {
       localStorage.setItem('easyup_last_org_id', currentMembership.organization_id);
@@ -276,6 +305,13 @@ async function buildCurrentUser(userId: string, email: string): Promise<CurrentU
 
   const currentOrg = currentMembership?.organizations;
   const roleName = (currentMembership?.roles?.name as UserRoleName) || 'client';
+
+  console.log('✅ Current user built:', {
+    id: userId,
+    email,
+    currentOrg: currentOrg?.name,
+    role: roleName
+  });
 
   return {
     id: userId,
