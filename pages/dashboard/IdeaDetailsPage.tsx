@@ -122,7 +122,7 @@ export const IdeaDetailsPage: React.FC = () => {
         description: `Concept approved. Please create visual assets.\n\nCopy: ${idea.content}`,
         status: 'todo',
         priority: 'high',
-        created_by: 'user.id',
+        created_by: user.id,
         assigned_to: user.id, 
         due_date: idea.planned_post_date || undefined
       });

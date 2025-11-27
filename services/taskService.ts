@@ -1,226 +1,517 @@
-
-import { mockDb } from '../lib/mockDb';
+import { supabase } from '../lib/supabase';
 import { Task, TaskStatus, TaskComment, TaskAttachment, NotificationType, User, ProjectSettings } from '../types';
 import { notificationService } from './notificationService';
 
 export const taskService = {
   async getProjectTasks(projectId: string): Promise<Task[]> {
-    const tasks = mockDb.filter('tasks', (t: any) => t.project_id === projectId);
-    
-    return tasks.map((t: any) => {
-        // Handle new array format or fallback to legacy string if migration failed
-        let assigneeIds: string[] = [];
-        if (Array.isArray(t.assigned_to)) {
-            assigneeIds = t.assigned_to;
-        } else if (typeof t.assigned_to === 'string') {
-            assigneeIds = [t.assigned_to];
-        }
+    try {
+      const { data: tasks, error } = await supabase
+        .from('tasks')
+        .select(`
+          *,
+          users:created_by (
+            id,
+            email,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: false });
 
-        const assignees = assigneeIds.map(id => mockDb.find('users', (u: any) => u.id === id)).filter(Boolean) as User[];
+      if (error) {
+        console.error('Failed to fetch tasks:', error.message);
+        throw new Error(`Failed to fetch tasks: ${error.message}`);
+      }
 
-        return {
-            ...t,
-            assigned_to: assigneeIds, // Ensure normalized array
-            assignees,
-            creator: mockDb.find('users', (u: any) => u.id === t.created_by)
-        };
-    }).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      if (!tasks) return [];
+
+      // For each task, fetch assignee details
+      const tasksWithAssignees = await Promise.all(
+        tasks.map(async (task: any) => {
+          const assigneeIds = task.assigned_to || [];
+
+          if (assigneeIds.length > 0) {
+            const { data: assignees } = await supabase
+              .from('users')
+              .select('id, email, full_name, avatar_url')
+              .in('id', assigneeIds);
+
+            return {
+              ...task,
+              creator: task.users,
+              assignees: assignees || []
+            };
+          }
+
+          return {
+            ...task,
+            creator: task.users,
+            assignees: []
+          };
+        })
+      );
+
+      return tasksWithAssignees;
+    } catch (err) {
+      console.error('Error in getProjectTasks:', err);
+      throw err;
+    }
   },
 
   async getUserTasks(userId: string): Promise<Task[]> {
-    const tasks = mockDb.filter('tasks', (t: any) => {
-        if (Array.isArray(t.assigned_to)) return t.assigned_to.includes(userId);
-        return t.assigned_to === userId;
-    });
-    
-    return tasks.map((t: any) => {
-        let assigneeIds: string[] = [];
-        if (Array.isArray(t.assigned_to)) {
-            assigneeIds = t.assigned_to;
-        } else if (typeof t.assigned_to === 'string') {
-            assigneeIds = [t.assigned_to];
-        }
+    try {
+      // Fetch tasks where user is in assigned_to array
+      const { data: tasks, error } = await supabase
+        .from('tasks')
+        .select(`
+          *,
+          users:created_by (
+            id,
+            email,
+            full_name,
+            avatar_url
+          ),
+          projects:project_id (
+            id,
+            name,
+            client_name,
+            organization_id
+          )
+        `)
+        .contains('assigned_to', [userId])
+        .order('due_date', { ascending: true, nullsFirst: false });
 
-        const assignees = assigneeIds.map(id => mockDb.find('users', (u: any) => u.id === id)).filter(Boolean) as User[];
+      if (error) {
+        console.error('Failed to fetch user tasks:', error.message);
+        throw new Error(`Failed to fetch user tasks: ${error.message}`);
+      }
 
-        return {
-            ...t,
-            assigned_to: assigneeIds,
-            assignees,
-            creator: mockDb.find('users', (u: any) => u.id === t.created_by),
-            project: mockDb.find('projects', (p: any) => p.id === t.project_id)
-        };
-    }).sort((a: any, b: any) => {
-       // Sort by Due Date asc (nulls last)
-       if (!a.due_date) return 1;
-       if (!b.due_date) return -1;
-       return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
-    });
+      if (!tasks) return [];
+
+      // For each task, fetch assignee details
+      const tasksWithAssignees = await Promise.all(
+        tasks.map(async (task: any) => {
+          const assigneeIds = task.assigned_to || [];
+
+          if (assigneeIds.length > 0) {
+            const { data: assignees } = await supabase
+              .from('users')
+              .select('id, email, full_name, avatar_url')
+              .in('id', assigneeIds);
+
+            return {
+              ...task,
+              creator: task.users,
+              project: task.projects,
+              assignees: assignees || []
+            };
+          }
+
+          return {
+            ...task,
+            creator: task.users,
+            project: task.projects,
+            assignees: []
+          };
+        })
+      );
+
+      return tasksWithAssignees;
+    } catch (err) {
+      console.error('Error in getUserTasks:', err);
+      throw err;
+    }
   },
 
   async createTask(taskData: Partial<Task>): Promise<Task> {
-    // Ensure assigned_to is array
-    const assignees = Array.isArray(taskData.assigned_to) ? taskData.assigned_to : (taskData.assigned_to ? [taskData.assigned_to] : []);
-    
-    const task = mockDb.insert<Task>('tasks', { ...taskData, assigned_to: assignees, checklist: [] });
-    
-    // TRIGGER NOTIFICATION for each assignee
-    if (assignees.length > 0) {
-       const project = mockDb.find('projects', (p: any) => p.id === task.project_id);
-       
-       for (const userId of assignees) {
-           if (userId !== task.created_by) {
-               await notificationService.createNotification({
-                  user_id: userId,
-                  organization_id: project?.organization_id || 'org-default',
-                  project_id: task.project_id,
-                  type: 'task_assigned',
-                  title: 'New Task Assigned',
-                  message: `You have been assigned to "${task.title}" in ${project?.name}`,
-                  sender_id: task.created_by,
-                  link_url: `/projects/${task.project_id}?tab=tasks`
-               });
-           }
-       }
-    }
+    try {
+      // Ensure assigned_to is array
+      const assignees = Array.isArray(taskData.assigned_to)
+        ? taskData.assigned_to
+        : (taskData.assigned_to ? [taskData.assigned_to] : []);
 
-    return task;
+      const { data: task, error } = await supabase
+        .from('tasks')
+        .insert({
+          ...taskData,
+          assigned_to: assignees,
+          checklist: taskData.checklist || []
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Failed to create task:', error.message);
+        throw new Error(`Failed to create task: ${error.message}`);
+      }
+
+      if (!task) {
+        throw new Error('No task returned from insert');
+      }
+
+      // TRIGGER NOTIFICATION for each assignee
+      if (assignees.length > 0) {
+        const { data: project } = await supabase
+          .from('projects')
+          .select('id, name, organization_id')
+          .eq('id', task.project_id)
+          .single();
+
+        if (project) {
+          for (const userId of assignees) {
+            if (userId !== task.created_by) {
+              await notificationService.createNotification({
+                user_id: userId,
+                organization_id: project.organization_id,
+                project_id: task.project_id,
+                type: 'task_assigned',
+                title: 'New Task Assigned',
+                message: `You have been assigned to "${task.title}" in ${project.name}`,
+                sender_id: task.created_by,
+                link_url: `/projects/${task.project_id}?tab=tasks`
+              });
+            }
+          }
+        }
+      }
+
+      return task;
+    } catch (err) {
+      console.error('Error in createTask:', err);
+      throw err;
+    }
   },
 
   async updateTask(taskId: string, updates: Partial<Task>): Promise<Task> {
-    const updated = mockDb.update('tasks', taskId, updates);
-    if (!updated) throw new Error("Task not found");
-    return updated;
+    try {
+      const { data: task, error } = await supabase
+        .from('tasks')
+        .update(updates)
+        .eq('id', taskId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Failed to update task:', error.message);
+        throw new Error(`Failed to update task: ${error.message}`);
+      }
+
+      if (!task) {
+        throw new Error('Task not found');
+      }
+
+      return task;
+    } catch (err) {
+      console.error('Error in updateTask:', err);
+      throw err;
+    }
   },
 
   async deleteTask(taskId: string): Promise<void> {
-    mockDb.delete('tasks', taskId);
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId);
+
+      if (error) {
+        console.error('Failed to delete task:', error.message);
+        throw new Error(`Failed to delete task: ${error.message}`);
+      }
+    } catch (err) {
+      console.error('Error in deleteTask:', err);
+      throw err;
+    }
   },
 
   async updateTaskStatus(taskId: string, status: TaskStatus): Promise<void> {
-    mockDb.update('tasks', taskId, { status });
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ status })
+        .eq('id', taskId);
+
+      if (error) {
+        console.error('Failed to update task status:', error.message);
+        throw new Error(`Failed to update task status: ${error.message}`);
+      }
+    } catch (err) {
+      console.error('Error in updateTaskStatus:', err);
+      throw err;
+    }
   },
 
   async getTaskComments(taskId: string): Promise<TaskComment[]> {
-    const comments = mockDb.filter('task_comments', (c: any) => c.task_id === taskId);
-    return comments.map((c: any) => ({
-        ...c,
-        user: mockDb.find('users', (u: any) => u.id === c.user_id)
-    })).sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    try {
+      const { data: comments, error } = await supabase
+        .from('task_comments')
+        .select(`
+          *,
+          users:user_id (
+            id,
+            email,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('task_id', taskId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Failed to fetch task comments:', error.message);
+        throw new Error(`Failed to fetch task comments: ${error.message}`);
+      }
+
+      if (!comments) return [];
+
+      return comments.map((comment: any) => ({
+        ...comment,
+        user: comment.users
+      }));
+    } catch (err) {
+      console.error('Error in getTaskComments:', err);
+      throw err;
+    }
   },
 
   async addTaskComment(taskId: string, userId: string, content: string): Promise<TaskComment> {
-    const comment = mockDb.insert<TaskComment>('task_comments', {
-        task_id: taskId,
-        user_id: userId,
-        content
-    });
-    const user = mockDb.find('users', (u: any) => u.id === userId);
-    return { ...comment, user };
+    try {
+      const { data: comment, error } = await supabase
+        .from('task_comments')
+        .insert({
+          task_id: taskId,
+          user_id: userId,
+          content
+        })
+        .select(`
+          *,
+          users:user_id (
+            id,
+            email,
+            full_name,
+            avatar_url
+          )
+        `)
+        .single();
+
+      if (error) {
+        console.error('Failed to add task comment:', error.message);
+        throw new Error(`Failed to add task comment: ${error.message}`);
+      }
+
+      if (!comment) {
+        throw new Error('No comment returned from insert');
+      }
+
+      return {
+        ...comment,
+        user: comment.users
+      };
+    } catch (err) {
+      console.error('Error in addTaskComment:', err);
+      throw err;
+    }
   },
 
   async getTaskAttachments(taskId: string): Promise<TaskAttachment[]> {
-    const attachments = mockDb.filter('task_attachments', (a: any) => a.task_id === taskId);
-    return attachments.map((a: any) => ({
-        ...a,
-        uploader: mockDb.find('users', (u: any) => u.id === a.uploaded_by)
-    })).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    try {
+      const { data: attachments, error } = await supabase
+        .from('task_attachments')
+        .select(`
+          *,
+          users:uploaded_by (
+            id,
+            email,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('task_id', taskId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Failed to fetch task attachments:', error.message);
+        throw new Error(`Failed to fetch task attachments: ${error.message}`);
+      }
+
+      if (!attachments) return [];
+
+      return attachments.map((attachment: any) => ({
+        ...attachment,
+        uploader: attachment.users
+      }));
+    } catch (err) {
+      console.error('Error in getTaskAttachments:', err);
+      throw err;
+    }
   },
 
   async addTaskAttachment(taskId: string, file: File, userId: string): Promise<TaskAttachment> {
-    // Simulate URL creation
-    const fileUrl = URL.createObjectURL(file);
-    
-    const attachment = mockDb.insert<TaskAttachment>('task_attachments', {
-      task_id: taskId,
-      file_url: fileUrl,
-      file_name: file.name,
-      file_type: file.type,
-      file_size: file.size,
-      uploaded_by: userId
-    });
-    
-    const user = mockDb.find('users', (u: any) => u.id === userId);
-    return { ...attachment, uploader: user };
+    try {
+      // Simulate URL creation (in production, use Supabase Storage)
+      const fileUrl = URL.createObjectURL(file);
+
+      const { data: attachment, error } = await supabase
+        .from('task_attachments')
+        .insert({
+          task_id: taskId,
+          file_url: fileUrl,
+          file_name: file.name,
+          file_type: file.type,
+          file_size: file.size,
+          uploaded_by: userId
+        })
+        .select(`
+          *,
+          users:uploaded_by (
+            id,
+            email,
+            full_name,
+            avatar_url
+          )
+        `)
+        .single();
+
+      if (error) {
+        console.error('Failed to add task attachment:', error.message);
+        throw new Error(`Failed to add task attachment: ${error.message}`);
+      }
+
+      if (!attachment) {
+        throw new Error('No attachment returned from insert');
+      }
+
+      return {
+        ...attachment,
+        uploader: attachment.users
+      };
+    } catch (err) {
+      console.error('Error in addTaskAttachment:', err);
+      throw err;
+    }
   },
 
   async addTaskAttachmentFromUrl(taskId: string, fileUrl: string, fileName: string, userId: string): Promise<TaskAttachment> {
-    const attachment = mockDb.insert<TaskAttachment>('task_attachments', {
-      task_id: taskId,
-      file_url: fileUrl,
-      file_name: fileName,
-      file_type: 'image/jpeg', 
-      file_size: 0,
-      uploaded_by: userId
-    });
-    
-    const user = mockDb.find('users', (u: any) => u.id === userId);
-    return { ...attachment, uploader: user };
+    try {
+      const { data: attachment, error } = await supabase
+        .from('task_attachments')
+        .insert({
+          task_id: taskId,
+          file_url: fileUrl,
+          file_name: fileName,
+          file_type: 'image/jpeg',
+          file_size: 0,
+          uploaded_by: userId
+        })
+        .select(`
+          *,
+          users:uploaded_by (
+            id,
+            email,
+            full_name,
+            avatar_url
+          )
+        `)
+        .single();
+
+      if (error) {
+        console.error('Failed to add task attachment from URL:', error.message);
+        throw new Error(`Failed to add task attachment from URL: ${error.message}`);
+      }
+
+      if (!attachment) {
+        throw new Error('No attachment returned from insert');
+      }
+
+      return {
+        ...attachment,
+        uploader: attachment.users
+      };
+    } catch (err) {
+      console.error('Error in addTaskAttachmentFromUrl:', err);
+      throw err;
+    }
   },
 
   async deleteTaskAttachment(attachmentId: string): Promise<void> {
-    mockDb.delete('task_attachments', attachmentId);
+    try {
+      const { error } = await supabase
+        .from('task_attachments')
+        .delete()
+        .eq('id', attachmentId);
+
+      if (error) {
+        console.error('Failed to delete task attachment:', error.message);
+        throw new Error(`Failed to delete task attachment: ${error.message}`);
+      }
+    } catch (err) {
+      console.error('Error in deleteTaskAttachment:', err);
+      throw err;
+    }
   },
 
   async checkForDueReminders(userId: string): Promise<void> {
-    const tasks = mockDb.filter('tasks', (t: any) => {
-        const assignees = Array.isArray(t.assigned_to) ? t.assigned_to : (t.assigned_to ? [t.assigned_to] : []);
-        return assignees.includes(userId) && t.status !== 'done' && t.due_date;
-    });
-    
-    const now = new Date();
+    try {
+      // Fetch tasks assigned to user that are not done and have due dates
+      const { data: tasks, error } = await supabase
+        .from('tasks')
+        .select('*, projects:project_id(id, name, organization_id, settings)')
+        .contains('assigned_to', [userId])
+        .neq('status', 'done')
+        .not('due_date', 'is', null);
 
-    for (const task of tasks) {
-      const due = new Date(task.due_date!);
-      const diffMs = due.getTime() - now.getTime();
-      const diffHours = diffMs / (1000 * 60 * 60);
-
-      let type: NotificationType | null = null;
-      let title = '';
-      let message = '';
-
-      if (diffHours > 0 && diffHours <= 24) {
-        type = 'task_due_soon';
-        title = 'Task Due Soon';
-        message = `"${task.title}" is due in less than 24 hours.`;
-      } else if (diffHours < 0) {
-        type = 'task_overdue';
-        title = 'Task Overdue';
-        message = `"${task.title}" is overdue.`;
+      if (error) {
+        console.error('Failed to fetch tasks for reminders:', error.message);
+        return;
       }
 
-      if (type) {
-        // Check for existing notification in last 24h to avoid spam
-        const oneDayAgo = new Date();
-        oneDayAgo.setHours(oneDayAgo.getHours() - 24);
-        
-        const existing = mockDb.filter('notifications', (n: any) => 
-          n.user_id === userId && 
-          n.type === type && 
-          n.message.includes(task.title) &&
-          new Date(n.created_at) > oneDayAgo
-        );
+      if (!tasks) return;
 
-        if (existing.length === 0) {
-           const project: any = mockDb.find('projects', (p: any) => p.id === task.project_id);
-           
-           await notificationService.createNotification({
-             user_id: userId,
-             organization_id: project?.organization_id || 'org-default',
-             project_id: task.project_id,
-             type,
-             title,
-             message,
-             link_url: `/my-tasks`,
-             sender_id: 'system'
-           });
+      const now = new Date();
 
-           // Check if we should "send an email"
-           if (project && project.settings?.notifications?.email_on_task_due) {
-              console.info(`[Mock Email Service] Sending "${title}" email to user ${userId} for task: ${task.title}`);
-           }
+      for (const task of tasks) {
+        const due = new Date(task.due_date!);
+        const diffMs = due.getTime() - now.getTime();
+        const diffHours = diffMs / (1000 * 60 * 60);
+
+        let type: NotificationType | null = null;
+        let title = '';
+        let message = '';
+
+        if (diffHours > 0 && diffHours <= 24) {
+          type = 'task_due_soon';
+          title = 'Task Due Soon';
+          message = `"${task.title}" is due in less than 24 hours.`;
+        } else if (diffHours < 0) {
+          type = 'task_overdue';
+          title = 'Task Overdue';
+          message = `"${task.title}" is overdue.`;
+        }
+
+        if (type && task.projects) {
+          // Check for existing notification in last 24h to avoid spam
+          // Note: This still uses mockDb for notifications (will migrate later)
+          await notificationService.createNotification({
+            user_id: userId,
+            organization_id: task.projects.organization_id,
+            project_id: task.project_id,
+            type,
+            title,
+            message,
+            link_url: `/my-tasks`,
+            sender_id: 'system'
+          });
+
+          // Check if we should "send an email"
+          const settings = task.projects.settings as any;
+          if (settings?.notifications?.email_on_task_due) {
+            console.info(`[Mock Email Service] Sending "${title}" email to user ${userId} for task: ${task.title}`);
+          }
         }
       }
+    } catch (err) {
+      console.error('Error in checkForDueReminders:', err);
     }
   }
 };
