@@ -1,86 +1,282 @@
-
-import { mockDb } from '../lib/mockDb';
+import { supabase } from '../lib/supabase';
 import { Idea, IdeaComment, IdeaStatus, IdeaApproval } from '../types';
 
 export const ideaService = {
   async getProjectIdeas(projectId: string): Promise<Idea[]> {
-    const ideas = mockDb.filter('ideas', (i: any) => i.project_id === projectId);
-    
-    return ideas.map((i: any) => ({
-        ...i,
-        creator: mockDb.find('users', (u: any) => u.id === i.created_by)
-    })).sort((a: any, b: any) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+    try {
+      const { data: ideas, error } = await supabase
+        .from('ideas')
+        .select(`
+          *,
+          users:created_by (
+            id,
+            email,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('project_id', projectId)
+        .order('updated_at', { ascending: false });
+
+      if (error) {
+        console.error('Failed to fetch ideas:', error.message);
+        throw new Error(`Failed to fetch ideas: ${error.message}`);
+      }
+
+      if (!ideas) return [];
+
+      return ideas.map((idea: any) => ({
+        ...idea,
+        creator: idea.users
+      }));
+    } catch (err) {
+      console.error('Error in getProjectIdeas:', err);
+      throw err;
+    }
   },
 
   async getIdea(ideaId: string): Promise<Idea> {
-    const idea: any = mockDb.find('ideas', (i: any) => i.id === ideaId);
-    if (!idea) throw new Error("Idea not found");
-    
-    const creator = mockDb.find('users', (u: any) => u.id === idea.created_by);
-    return { ...idea, creator };
+    try {
+      const { data: idea, error } = await supabase
+        .from('ideas')
+        .select(`
+          *,
+          users:created_by (
+            id,
+            email,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('id', ideaId)
+        .single();
+
+      if (error) {
+        console.error('Failed to fetch idea:', error.message);
+        throw new Error('Idea not found');
+      }
+
+      if (!idea) {
+        throw new Error('Idea not found');
+      }
+
+      return {
+        ...idea,
+        creator: idea.users
+      };
+    } catch (err) {
+      console.error('Error in getIdea:', err);
+      throw err;
+    }
   },
 
   async createIdea(idea: Partial<Idea>): Promise<Idea> {
-    return mockDb.insert('ideas', idea);
+    try {
+      const { data, error } = await supabase
+        .from('ideas')
+        .insert(idea)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Failed to create idea:', error.message);
+        throw new Error(`Failed to create idea: ${error.message}`);
+      }
+
+      if (!data) {
+        throw new Error('No idea returned from insert');
+      }
+
+      return data;
+    } catch (err) {
+      console.error('Error in createIdea:', err);
+      throw err;
+    }
   },
 
   async updateIdea(id: string, updates: Partial<Idea>): Promise<void> {
-    mockDb.update('ideas', id, updates);
+    try {
+      const { error } = await supabase
+        .from('ideas')
+        .update(updates)
+        .eq('id', id);
+
+      if (error) {
+        console.error('Failed to update idea:', error.message);
+        throw new Error(`Failed to update idea: ${error.message}`);
+      }
+    } catch (err) {
+      console.error('Error in updateIdea:', err);
+      throw err;
+    }
   },
 
   async deleteIdea(id: string): Promise<void> {
-    mockDb.delete('ideas', id);
+    try {
+      const { error } = await supabase
+        .from('ideas')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Failed to delete idea:', error.message);
+        throw new Error(`Failed to delete idea: ${error.message}`);
+      }
+    } catch (err) {
+      console.error('Error in deleteIdea:', err);
+      throw err;
+    }
   },
 
   async updateStatusWithApproval(
-    id: string, 
-    status: IdeaStatus, 
-    userId: string, 
+    id: string,
+    status: IdeaStatus,
+    userId: string,
     userRole: string,
     action: 'approved' | 'rejected' | 'requested_changes',
     comments?: string
   ): Promise<void> {
-    
-    const updates: any = { status };
-    if (status === 'pending_approval') updates.submitted_at = new Date().toISOString();
-    if (status === 'scheduled') updates.approved_at = new Date().toISOString();
+    try {
+      const updates: any = { status };
+      if (status === 'pending_approval') updates.submitted_at = new Date().toISOString();
+      if (status === 'scheduled') updates.approved_at = new Date().toISOString();
 
-    mockDb.update('ideas', id, updates);
+      // Update idea status
+      const { error: updateError } = await supabase
+        .from('ideas')
+        .update(updates)
+        .eq('id', id);
 
-    if (status !== 'pending_approval') {
-      mockDb.insert('idea_approvals', {
-        idea_id: id,
-        approver_id: userId,
-        approver_role: userRole,
-        action,
-        comments
-      });
+      if (updateError) {
+        console.error('Failed to update idea status:', updateError.message);
+        throw new Error(`Failed to update idea status: ${updateError.message}`);
+      }
+
+      // Create approval record (except for pending_approval status)
+      if (status !== 'pending_approval') {
+        const { error: approvalError } = await supabase
+          .from('idea_approvals')
+          .insert({
+            idea_id: id,
+            approver_id: userId,
+            approver_role: userRole,
+            action,
+            comments
+          });
+
+        if (approvalError) {
+          console.error('Failed to create approval:', approvalError.message);
+          // Don't throw, status was updated successfully
+        }
+      }
+    } catch (err) {
+      console.error('Error in updateStatusWithApproval:', err);
+      throw err;
     }
   },
 
   async getComments(ideaId: string): Promise<IdeaComment[]> {
-    const comments = mockDb.filter('idea_comments', (c: any) => c.idea_id === ideaId);
-    return comments.map((c: any) => ({
-        ...c,
-        user: mockDb.find('users', (u: any) => u.id === c.user_id)
-    })).sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    try {
+      const { data: comments, error } = await supabase
+        .from('idea_comments')
+        .select(`
+          *,
+          users:user_id (
+            id,
+            email,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('idea_id', ideaId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Failed to fetch comments:', error.message);
+        throw new Error(`Failed to fetch comments: ${error.message}`);
+      }
+
+      if (!comments) return [];
+
+      return comments.map((comment: any) => ({
+        ...comment,
+        user: comment.users
+      }));
+    } catch (err) {
+      console.error('Error in getComments:', err);
+      throw err;
+    }
   },
 
   async addComment(ideaId: string, userId: string, content: string): Promise<IdeaComment> {
-    const comment = mockDb.insert<IdeaComment>('idea_comments', {
-        idea_id: ideaId,
-        user_id: userId,
-        content
-    });
-    const user = mockDb.find('users', (u: any) => u.id === userId);
-    return { ...comment, user };
+    try {
+      const { data: comment, error } = await supabase
+        .from('idea_comments')
+        .insert({
+          idea_id: ideaId,
+          user_id: userId,
+          content
+        })
+        .select(`
+          *,
+          users:user_id (
+            id,
+            email,
+            full_name,
+            avatar_url
+          )
+        `)
+        .single();
+
+      if (error) {
+        console.error('Failed to add comment:', error.message);
+        throw new Error(`Failed to add comment: ${error.message}`);
+      }
+
+      if (!comment) {
+        throw new Error('No comment returned from insert');
+      }
+
+      return {
+        ...comment,
+        user: comment.users
+      };
+    } catch (err) {
+      console.error('Error in addComment:', err);
+      throw err;
+    }
   },
 
   async getApprovals(ideaId: string): Promise<IdeaApproval[]> {
-    const approvals = mockDb.filter('idea_approvals', (a: any) => a.idea_id === ideaId);
-    return approvals.map((a: any) => ({
-        ...a,
-        approver: mockDb.find('users', (u: any) => u.id === a.approver_id)
-    })).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    try {
+      const { data: approvals, error } = await supabase
+        .from('idea_approvals')
+        .select(`
+          *,
+          users:approver_id (
+            id,
+            email,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('idea_id', ideaId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Failed to fetch approvals:', error.message);
+        throw new Error(`Failed to fetch approvals: ${error.message}`);
+      }
+
+      if (!approvals) return [];
+
+      return approvals.map((approval: any) => ({
+        ...approval,
+        approver: approval.users
+      }));
+    } catch (err) {
+      console.error('Error in getApprovals:', err);
+      throw err;
+    }
   }
 };
