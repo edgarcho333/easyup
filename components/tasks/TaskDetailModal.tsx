@@ -7,7 +7,8 @@ import { taskService } from '../../services/taskService';
 import { projectService } from '../../services/projectService';
 import { Button } from '../ui/Button';
 import { X, Calendar, Flag, User, CheckCircle2, Trash2, Plus, CheckSquare, Send, Paperclip, FileText, Download, Clock, File, ChevronDown, Link, Check } from 'lucide-react';
-import { newId } from '../../lib/mockDb';
+// Simple ID generator for checklist items (stored as JSON in task record)
+const generateId = () => crypto.randomUUID();
 import { SmartDatePicker } from '../ui/SmartDatePicker';
 
 interface TaskDetailModalProps {
@@ -186,7 +187,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, isOpen, 
 
   // Checklist Logic
   const addChecklistItem = () => {
-    setChecklist([...checklist, { id: newId(), text: '', completed: false }]);
+    setChecklist([...checklist, { id: generateId(), text: '', completed: false }]);
   };
   const updateChecklistItem = (id: string, text: string) => {
     setChecklist(checklist.map(item => item.id === id ? { ...item, text } : item));

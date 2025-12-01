@@ -7,15 +7,7 @@ export const taskService = {
     try {
       const { data: tasks, error } = await supabase
         .from('tasks')
-        .select(`
-          *,
-          users:created_by (
-            id,
-            email,
-            full_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('project_id', projectId)
         .order('created_at', { ascending: false });
 
@@ -26,33 +18,36 @@ export const taskService = {
 
       if (!tasks) return [];
 
-      // For each task, fetch assignee details
-      const tasksWithAssignees = await Promise.all(
+      // For each task, fetch creator and assignee details
+      const tasksWithRelations = await Promise.all(
         tasks.map(async (task: any) => {
-          const assigneeIds = task.assigned_to || [];
+          // Fetch creator info
+          let creator = undefined;
+          if (task.created_by) {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('id, email, full_name, avatar_url')
+              .eq('id', task.created_by)
+              .maybeSingle();
+            creator = userData || undefined;
+          }
 
+          // Fetch assignees
+          const assigneeIds = task.assigned_to || [];
+          let assignees: any[] = [];
           if (assigneeIds.length > 0) {
-            const { data: assignees } = await supabase
+            const { data: assigneesData } = await supabase
               .from('users')
               .select('id, email, full_name, avatar_url')
               .in('id', assigneeIds);
-
-            return {
-              ...task,
-              creator: task.users,
-              assignees: assignees || []
-            };
+            assignees = assigneesData || [];
           }
 
-          return {
-            ...task,
-            creator: task.users,
-            assignees: []
-          };
+          return { ...task, creator, assignees };
         })
       );
 
-      return tasksWithAssignees;
+      return tasksWithRelations;
     } catch (err) {
       console.error('Error in getProjectTasks:', err);
       throw err;
@@ -64,21 +59,7 @@ export const taskService = {
       // Fetch tasks where user is in assigned_to array
       const { data: tasks, error } = await supabase
         .from('tasks')
-        .select(`
-          *,
-          users:created_by (
-            id,
-            email,
-            full_name,
-            avatar_url
-          ),
-          projects:project_id (
-            id,
-            name,
-            client_name,
-            organization_id
-          )
-        `)
+        .select('*')
         .contains('assigned_to', [userId])
         .order('due_date', { ascending: true, nullsFirst: false });
 
@@ -89,35 +70,47 @@ export const taskService = {
 
       if (!tasks) return [];
 
-      // For each task, fetch assignee details
-      const tasksWithAssignees = await Promise.all(
+      // For each task, fetch creator, project, and assignee details
+      const tasksWithRelations = await Promise.all(
         tasks.map(async (task: any) => {
-          const assigneeIds = task.assigned_to || [];
+          // Fetch creator info
+          let creator = undefined;
+          if (task.created_by) {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('id, email, full_name, avatar_url')
+              .eq('id', task.created_by)
+              .maybeSingle();
+            creator = userData || undefined;
+          }
 
+          // Fetch project info
+          let project = undefined;
+          if (task.project_id) {
+            const { data: projectData } = await supabase
+              .from('projects')
+              .select('id, name, client_name, organization_id')
+              .eq('id', task.project_id)
+              .maybeSingle();
+            project = projectData || undefined;
+          }
+
+          // Fetch assignees
+          const assigneeIds = task.assigned_to || [];
+          let assignees: any[] = [];
           if (assigneeIds.length > 0) {
-            const { data: assignees } = await supabase
+            const { data: assigneesData } = await supabase
               .from('users')
               .select('id, email, full_name, avatar_url')
               .in('id', assigneeIds);
-
-            return {
-              ...task,
-              creator: task.users,
-              project: task.projects,
-              assignees: assignees || []
-            };
+            assignees = assigneesData || [];
           }
 
-          return {
-            ...task,
-            creator: task.users,
-            project: task.projects,
-            assignees: []
-          };
+          return { ...task, creator, project, assignees };
         })
       );
 
-      return tasksWithAssignees;
+      return tasksWithRelations;
     } catch (err) {
       console.error('Error in getUserTasks:', err);
       throw err;
@@ -246,15 +239,7 @@ export const taskService = {
     try {
       const { data: comments, error } = await supabase
         .from('task_comments')
-        .select(`
-          *,
-          users:user_id (
-            id,
-            email,
-            full_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('task_id', taskId)
         .order('created_at', { ascending: true });
 
@@ -265,10 +250,23 @@ export const taskService = {
 
       if (!comments) return [];
 
-      return comments.map((comment: any) => ({
-        ...comment,
-        user: comment.users
-      }));
+      // Fetch user info separately for each comment
+      const commentsWithUsers = await Promise.all(
+        comments.map(async (comment: any) => {
+          let user = undefined;
+          if (comment.user_id) {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('id, email, full_name, avatar_url')
+              .eq('id', comment.user_id)
+              .maybeSingle();
+            user = userData || undefined;
+          }
+          return { ...comment, user };
+        })
+      );
+
+      return commentsWithUsers;
     } catch (err) {
       console.error('Error in getTaskComments:', err);
       throw err;
@@ -284,15 +282,7 @@ export const taskService = {
           user_id: userId,
           content
         })
-        .select(`
-          *,
-          users:user_id (
-            id,
-            email,
-            full_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .single();
 
       if (error) {
@@ -304,10 +294,18 @@ export const taskService = {
         throw new Error('No comment returned from insert');
       }
 
-      return {
-        ...comment,
-        user: comment.users
-      };
+      // Fetch user info separately
+      let user = undefined;
+      if (comment.user_id) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('id, email, full_name, avatar_url')
+          .eq('id', comment.user_id)
+          .maybeSingle();
+        user = userData || undefined;
+      }
+
+      return { ...comment, user };
     } catch (err) {
       console.error('Error in addTaskComment:', err);
       throw err;
@@ -318,15 +316,7 @@ export const taskService = {
     try {
       const { data: attachments, error } = await supabase
         .from('task_attachments')
-        .select(`
-          *,
-          users:uploaded_by (
-            id,
-            email,
-            full_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('task_id', taskId)
         .order('created_at', { ascending: false });
 
@@ -337,10 +327,23 @@ export const taskService = {
 
       if (!attachments) return [];
 
-      return attachments.map((attachment: any) => ({
-        ...attachment,
-        uploader: attachment.users
-      }));
+      // Fetch uploader info separately for each attachment
+      const attachmentsWithUploaders = await Promise.all(
+        attachments.map(async (attachment: any) => {
+          let uploader = undefined;
+          if (attachment.uploaded_by) {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('id, email, full_name, avatar_url')
+              .eq('id', attachment.uploaded_by)
+              .maybeSingle();
+            uploader = userData || undefined;
+          }
+          return { ...attachment, uploader };
+        })
+      );
+
+      return attachmentsWithUploaders;
     } catch (err) {
       console.error('Error in getTaskAttachments:', err);
       throw err;
@@ -362,15 +365,7 @@ export const taskService = {
           file_size: file.size,
           uploaded_by: userId
         })
-        .select(`
-          *,
-          users:uploaded_by (
-            id,
-            email,
-            full_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .single();
 
       if (error) {
@@ -382,10 +377,18 @@ export const taskService = {
         throw new Error('No attachment returned from insert');
       }
 
-      return {
-        ...attachment,
-        uploader: attachment.users
-      };
+      // Fetch uploader info separately
+      let uploader = undefined;
+      if (attachment.uploaded_by) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('id, email, full_name, avatar_url')
+          .eq('id', attachment.uploaded_by)
+          .maybeSingle();
+        uploader = userData || undefined;
+      }
+
+      return { ...attachment, uploader };
     } catch (err) {
       console.error('Error in addTaskAttachment:', err);
       throw err;
@@ -404,15 +407,7 @@ export const taskService = {
           file_size: 0,
           uploaded_by: userId
         })
-        .select(`
-          *,
-          users:uploaded_by (
-            id,
-            email,
-            full_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .single();
 
       if (error) {
@@ -424,10 +419,18 @@ export const taskService = {
         throw new Error('No attachment returned from insert');
       }
 
-      return {
-        ...attachment,
-        uploader: attachment.users
-      };
+      // Fetch uploader info separately
+      let uploader = undefined;
+      if (attachment.uploaded_by) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('id, email, full_name, avatar_url')
+          .eq('id', attachment.uploaded_by)
+          .maybeSingle();
+        uploader = userData || undefined;
+      }
+
+      return { ...attachment, uploader };
     } catch (err) {
       console.error('Error in addTaskAttachmentFromUrl:', err);
       throw err;
@@ -456,7 +459,7 @@ export const taskService = {
       // Fetch tasks assigned to user that are not done and have due dates
       const { data: tasks, error } = await supabase
         .from('tasks')
-        .select('*, projects:project_id(id, name, organization_id, settings)')
+        .select('*')
         .contains('assigned_to', [userId])
         .neq('status', 'done')
         .not('due_date', 'is', null);
@@ -489,24 +492,31 @@ export const taskService = {
           message = `"${task.title}" is overdue.`;
         }
 
-        if (type && task.projects) {
-          // Check for existing notification in last 24h to avoid spam
-          // Note: This still uses mockDb for notifications (will migrate later)
-          await notificationService.createNotification({
-            user_id: userId,
-            organization_id: task.projects.organization_id,
-            project_id: task.project_id,
-            type,
-            title,
-            message,
-            link_url: `/my-tasks`,
-            sender_id: 'system'
-          });
+        if (type && task.project_id) {
+          // Fetch project info separately
+          const { data: project } = await supabase
+            .from('projects')
+            .select('id, name, organization_id, settings')
+            .eq('id', task.project_id)
+            .maybeSingle();
 
-          // Check if we should "send an email"
-          const settings = task.projects.settings as any;
-          if (settings?.notifications?.email_on_task_due) {
-            console.info(`[Mock Email Service] Sending "${title}" email to user ${userId} for task: ${task.title}`);
+          if (project) {
+            // Create notification for due/overdue tasks
+            await notificationService.createNotification({
+              user_id: userId,
+              organization_id: project.organization_id,
+              project_id: task.project_id,
+              type,
+              title,
+              message,
+              link_url: `/my-tasks`
+            });
+
+            // Check if we should "send an email"
+            const settings = project.settings as any;
+            if (settings?.notifications?.email_on_task_due) {
+              console.info(`[Mock Email Service] Sending "${title}" email to user ${userId} for task: ${task.title}`);
+            }
           }
         }
       }

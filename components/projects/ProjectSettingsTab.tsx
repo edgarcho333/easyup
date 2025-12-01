@@ -73,7 +73,15 @@ export const ProjectSettingsTab: React.FC<ProjectSettingsTabProps> = ({ project,
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description || '');
   const [clientName, setClientName] = useState(project.client_name);
-  const [settings, setSettings] = useState<ProjectSettings>(project.settings || DEFAULT_SETTINGS);
+  // Merge project settings with defaults to ensure all fields exist
+  const [settings, setSettings] = useState<ProjectSettings>(() => {
+    const projectSettings = project.settings || {};
+    return {
+      workflow: { ...DEFAULT_SETTINGS.workflow, ...projectSettings.workflow },
+      permissions: projectSettings.permissions?.length ? projectSettings.permissions : DEFAULT_SETTINGS.permissions,
+      notifications: { ...DEFAULT_SETTINGS.notifications, ...projectSettings.notifications }
+    };
+  });
 
   const handleSaveGeneral = async () => {
     setIsSaving(true);

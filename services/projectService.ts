@@ -28,20 +28,7 @@ export const projectService = {
         projects.map(async (project) => {
           const { data: members, error: membersError } = await supabase
             .from('project_members')
-            .select(`
-              *,
-              users:user_id (
-                id,
-                email,
-                full_name,
-                avatar_url
-              ),
-              roles:role_id (
-                id,
-                name,
-                display_name
-              )
-            `)
+            .select('id, project_id, user_id, role_id, is_lead, added_at')
             .eq('project_id', project.id);
 
           if (membersError) {
@@ -49,16 +36,33 @@ export const projectService = {
             return { ...project, members: [] };
           }
 
-          const formattedMembers = members?.map((m: any) => ({
-            id: m.id,
-            project_id: m.project_id,
-            user_id: m.user_id,
-            role_id: m.role_id,
-            is_lead: m.is_lead,
-            added_at: m.added_at,
-            user: m.users,
-            role: m.roles
-          })) || [];
+          // Fetch user and role info separately
+          const formattedMembers = await Promise.all(
+            (members || []).map(async (m: any) => {
+              const { data: user } = await supabase
+                .from('users')
+                .select('id, email, full_name, avatar_url')
+                .eq('id', m.user_id)
+                .maybeSingle();
+
+              const { data: role } = await supabase
+                .from('roles')
+                .select('id, name, display_name')
+                .eq('id', m.role_id)
+                .maybeSingle();
+
+              return {
+                id: m.id,
+                project_id: m.project_id,
+                user_id: m.user_id,
+                role_id: m.role_id,
+                is_lead: m.is_lead,
+                added_at: m.added_at,
+                user: user || undefined,
+                role: role || undefined
+              };
+            })
+          );
 
           return { ...project, members: formattedMembers };
         })
@@ -73,6 +77,7 @@ export const projectService = {
 
   async getProject(projectId: string): Promise<Project> {
     try {
+      console.log('🔵 [projectService] getProject called for:', projectId);
       const { data: project, error } = await supabase
         .from('projects')
         .select('*')
@@ -88,40 +93,48 @@ export const projectService = {
         throw new Error('Project not found');
       }
 
-      // Fetch project members with user and role details
+      // Fetch project members
       const { data: members, error: membersError } = await supabase
         .from('project_members')
-        .select(`
-          *,
-          users:user_id (
-            id,
-            email,
-            full_name,
-            avatar_url
-          ),
-          roles:role_id (
-            id,
-            name,
-            display_name
-          )
-        `)
+        .select('id, project_id, user_id, role_id, is_lead, added_at')
         .eq('project_id', projectId);
+
+      console.log('🔵 [projectService] project_members result:', { members, membersError });
 
       if (membersError) {
         console.error('Failed to fetch project members:', membersError.message);
         return { ...project, members: [] };
       }
 
-      const formattedMembers = members?.map((m: any) => ({
-        id: m.id,
-        project_id: m.project_id,
-        user_id: m.user_id,
-        role_id: m.role_id,
-        is_lead: m.is_lead,
-        added_at: m.added_at,
-        user: m.users,
-        role: m.roles
-      })) || [];
+      // Fetch user and role info separately for each member
+      const formattedMembers = await Promise.all(
+        (members || []).map(async (m: any) => {
+          // Get user info
+          const { data: user } = await supabase
+            .from('users')
+            .select('id, email, full_name, avatar_url')
+            .eq('id', m.user_id)
+            .maybeSingle();
+
+          // Get role info
+          const { data: role } = await supabase
+            .from('roles')
+            .select('id, name, display_name')
+            .eq('id', m.role_id)
+            .maybeSingle();
+
+          return {
+            id: m.id,
+            project_id: m.project_id,
+            user_id: m.user_id,
+            role_id: m.role_id,
+            is_lead: m.is_lead,
+            added_at: m.added_at,
+            user: user || undefined,
+            role: role || undefined
+          };
+        })
+      );
 
       return { ...project, members: formattedMembers };
     } catch (err) {
@@ -169,15 +182,34 @@ export const projectService = {
         throw new Error('No project returned from insert');
       }
 
-      // Add project members
-      if (assignedMembers.length > 0) {
-        const membersToInsert = assignedMembers.map(m => ({
-          project_id: project.id,
-          user_id: m.userId,
-          role_id: m.roleId,
-          added_by: creatorId
-        }));
+      // Get creator's role in organization (to use in project)
+      const { data: creatorMembership } = await supabase
+        .from('user_organizations')
+        .select('role_id')
+        .eq('user_id', creatorId)
+        .eq('organization_id', organizationId)
+        .maybeSingle();
 
+      // Always add creator as project member
+      const membersToInsert = assignedMembers.map(m => ({
+        project_id: project.id,
+        user_id: m.userId,
+        role_id: m.roleId,
+        added_by: creatorId
+      }));
+
+      // Add creator if not already in the list
+      const creatorAlreadyIncluded = assignedMembers.some(m => m.userId === creatorId);
+      if (!creatorAlreadyIncluded && creatorMembership?.role_id) {
+        membersToInsert.push({
+          project_id: project.id,
+          user_id: creatorId,
+          role_id: creatorMembership.role_id,
+          added_by: creatorId
+        });
+      }
+
+      if (membersToInsert.length > 0) {
         const { error: membersError } = await supabase
           .from('project_members')
           .insert(membersToInsert);
@@ -199,7 +231,6 @@ export const projectService = {
         type: 'project_created',
         title: 'New Project Created',
         message: `${fullName} created a new project: ${projectData.name} for ${projectData.client_name}`,
-        sender_id: 'system',
         link_url: `/projects/${project.id}`
       });
 

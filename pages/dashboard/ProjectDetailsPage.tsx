@@ -25,7 +25,8 @@ import { ProjectActivityFeed } from '../../components/projects/ProjectActivityFe
 import { ProjectChatSidebar } from '../../components/projects/ProjectChatSidebar';
 import { ProjectSettingsTab } from '../../components/projects/ProjectSettingsTab';
 import { ProjectDashboard } from '../../components/projects/ProjectDashboard';
-import { WorkflowList } from '../../components/workflows/WorkflowList'; 
+import { WorkflowList } from '../../components/workflows/WorkflowList';
+import { AddProjectMemberModal } from '../../components/projects/AddProjectMemberModal';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { NotificationDropdown } from '../../components/notifications/NotificationDropdown';
@@ -62,6 +63,9 @@ export const ProjectDetailsPage: React.FC = () => {
   
   // Notification State
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+
+  // Add Member Modal State
+  const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -597,22 +601,33 @@ export const ProjectDetailsPage: React.FC = () => {
             )}
 
             {activeTab === 'team' && (
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                 {project.members?.map(member => (
-                   <div key={member.id} className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center gap-4 hover:shadow-md transition-shadow group">
-                     <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/50 dark:to-primary-800/50 flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold text-lg group-hover:scale-110 transition-transform border-2 border-white dark:border-slate-800 shadow-sm">
-                       {member.user?.full_name?.[0] || 'U'}
-                     </div>
-                     <div>
-                       <p className="font-bold text-slate-900 dark:text-white">{member.user?.full_name || 'Unknown'}</p>
-                       <p className="text-sm text-slate-500 dark:text-slate-400 capitalize">{member.role?.display_name}</p>
-                       <div className="flex items-center gap-1.5 mt-1.5">
-                          <div className={`w-1.5 h-1.5 rounded-full ${member.user ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
-                          <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">{member.user ? 'Active' : 'Pending'}</span>
+               <div className="space-y-4">
+                 <div className="flex justify-between items-center">
+                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                     Project Team ({project.members?.length || 0})
+                   </h3>
+                   <Button onClick={() => setIsAddMemberModalOpen(true)}>
+                     <Plus className="h-4 w-4 mr-2" />
+                     Add Member
+                   </Button>
+                 </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                   {project.members?.map(member => (
+                     <div key={member.id} className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center gap-4 hover:shadow-md transition-shadow group">
+                       <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/50 dark:to-primary-800/50 flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold text-lg group-hover:scale-110 transition-transform border-2 border-white dark:border-slate-800 shadow-sm">
+                         {member.user?.full_name?.[0] || 'U'}
+                       </div>
+                       <div>
+                         <p className="font-bold text-slate-900 dark:text-white">{member.user?.full_name || 'Unknown'}</p>
+                         <p className="text-sm text-slate-500 dark:text-slate-400 capitalize">{member.role?.display_name}</p>
+                         <div className="flex items-center gap-1.5 mt-1.5">
+                            <div className={`w-1.5 h-1.5 rounded-full ${member.user ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
+                            <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">{member.user ? 'Active' : 'Pending'}</span>
+                         </div>
                        </div>
                      </div>
-                   </div>
-                 ))}
+                   ))}
+                 </div>
                </div>
             )}
 
@@ -658,10 +673,18 @@ export const ProjectDetailsPage: React.FC = () => {
             projectId={project.id}
           />
 
-          <WorkflowList 
-            isOpen={isWorkflowOpen} 
+          <WorkflowList
+            isOpen={isWorkflowOpen}
             onClose={() => setIsWorkflowOpen(false)}
             projectId={project.id}
+          />
+
+          <AddProjectMemberModal
+            isOpen={isAddMemberModalOpen}
+            onClose={() => setIsAddMemberModalOpen(false)}
+            projectId={project.id}
+            existingMemberIds={project.members?.map(m => m.user_id) || []}
+            onSuccess={() => fetchProjectDetails(project.id)}
           />
         </>
       )}

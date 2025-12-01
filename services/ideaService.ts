@@ -6,15 +6,7 @@ export const ideaService = {
     try {
       const { data: ideas, error } = await supabase
         .from('ideas')
-        .select(`
-          *,
-          users:created_by (
-            id,
-            email,
-            full_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('project_id', projectId)
         .order('updated_at', { ascending: false });
 
@@ -25,10 +17,23 @@ export const ideaService = {
 
       if (!ideas) return [];
 
-      return ideas.map((idea: any) => ({
-        ...idea,
-        creator: idea.users
-      }));
+      // Fetch creator info separately for each idea
+      const ideasWithCreators = await Promise.all(
+        ideas.map(async (idea: any) => {
+          let creator = undefined;
+          if (idea.created_by) {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('id, email, full_name, avatar_url')
+              .eq('id', idea.created_by)
+              .maybeSingle();
+            creator = userData || undefined;
+          }
+          return { ...idea, creator };
+        })
+      );
+
+      return ideasWithCreators;
     } catch (err) {
       console.error('Error in getProjectIdeas:', err);
       throw err;
@@ -39,15 +44,7 @@ export const ideaService = {
     try {
       const { data: idea, error } = await supabase
         .from('ideas')
-        .select(`
-          *,
-          users:created_by (
-            id,
-            email,
-            full_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('id', ideaId)
         .single();
 
@@ -60,10 +57,18 @@ export const ideaService = {
         throw new Error('Idea not found');
       }
 
-      return {
-        ...idea,
-        creator: idea.users
-      };
+      // Fetch creator info separately
+      let creator = undefined;
+      if (idea.created_by) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('id, email, full_name, avatar_url')
+          .eq('id', idea.created_by)
+          .maybeSingle();
+        creator = userData || undefined;
+      }
+
+      return { ...idea, creator };
     } catch (err) {
       console.error('Error in getIdea:', err);
       throw err;
@@ -179,15 +184,7 @@ export const ideaService = {
     try {
       const { data: comments, error } = await supabase
         .from('idea_comments')
-        .select(`
-          *,
-          users:user_id (
-            id,
-            email,
-            full_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('idea_id', ideaId)
         .order('created_at', { ascending: true });
 
@@ -198,10 +195,23 @@ export const ideaService = {
 
       if (!comments) return [];
 
-      return comments.map((comment: any) => ({
-        ...comment,
-        user: comment.users
-      }));
+      // Fetch user info separately for each comment
+      const commentsWithUsers = await Promise.all(
+        comments.map(async (comment: any) => {
+          let user = undefined;
+          if (comment.user_id) {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('id, email, full_name, avatar_url')
+              .eq('id', comment.user_id)
+              .maybeSingle();
+            user = userData || undefined;
+          }
+          return { ...comment, user };
+        })
+      );
+
+      return commentsWithUsers;
     } catch (err) {
       console.error('Error in getComments:', err);
       throw err;
@@ -217,15 +227,7 @@ export const ideaService = {
           user_id: userId,
           content
         })
-        .select(`
-          *,
-          users:user_id (
-            id,
-            email,
-            full_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .single();
 
       if (error) {
@@ -237,10 +239,18 @@ export const ideaService = {
         throw new Error('No comment returned from insert');
       }
 
-      return {
-        ...comment,
-        user: comment.users
-      };
+      // Fetch user info separately
+      let user = undefined;
+      if (comment.user_id) {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('id, email, full_name, avatar_url')
+          .eq('id', comment.user_id)
+          .maybeSingle();
+        user = userData || undefined;
+      }
+
+      return { ...comment, user };
     } catch (err) {
       console.error('Error in addComment:', err);
       throw err;
@@ -251,15 +261,7 @@ export const ideaService = {
     try {
       const { data: approvals, error } = await supabase
         .from('idea_approvals')
-        .select(`
-          *,
-          users:approver_id (
-            id,
-            email,
-            full_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('idea_id', ideaId)
         .order('created_at', { ascending: false });
 
@@ -270,10 +272,23 @@ export const ideaService = {
 
       if (!approvals) return [];
 
-      return approvals.map((approval: any) => ({
-        ...approval,
-        approver: approval.users
-      }));
+      // Fetch approver info separately for each approval
+      const approvalsWithUsers = await Promise.all(
+        approvals.map(async (approval: any) => {
+          let approver = undefined;
+          if (approval.approver_id) {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('id, email, full_name, avatar_url')
+              .eq('id', approval.approver_id)
+              .maybeSingle();
+            approver = userData || undefined;
+          }
+          return { ...approval, approver };
+        })
+      );
+
+      return approvalsWithUsers;
     } catch (err) {
       console.error('Error in getApprovals:', err);
       throw err;

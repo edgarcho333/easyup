@@ -42,17 +42,22 @@ export const OrganizationSettingsPage: React.FC = () => {
   const canManage = user?.currentRole === 'super_admin' || user?.currentRole === 'account_manager';
 
   useEffect(() => {
+    console.log('🔵 [OrgSettingsPage] useEffect triggered, user:', user);
+    console.log('🔵 [OrgSettingsPage] currentOrganization:', user?.currentOrganization);
     if (user?.currentOrganization) {
       setOrgName(user.currentOrganization.name);
       fetchData();
       // Removed realtime subscriptions for mock mode
     } else if (user && !user.currentOrganization) {
+        console.log('🔵 [OrgSettingsPage] User exists but no currentOrganization');
         setIsLoading(false);
     }
   }, [user?.currentOrganization?.id]);
 
   const fetchData = async () => {
+    console.log('🔵 [OrgSettingsPage] fetchData called, currentOrganization:', user?.currentOrganization);
     if (!user?.currentOrganization) {
+        console.log('🔵 [OrgSettingsPage] No currentOrganization, stopping');
         setIsLoading(false);
         return;
     }
@@ -61,14 +66,17 @@ export const OrganizationSettingsPage: React.FC = () => {
     if (members.length === 0) setIsLoading(true);
 
     try {
+      console.log('🔵 [OrgSettingsPage] Fetching members and roles for org:', user.currentOrganization.id);
       const [membersData, rolesData] = await Promise.all([
         organizationService.getTeamMembers(user.currentOrganization.id),
         organizationService.getRoles()
       ]);
+      console.log('✅ [OrgSettingsPage] Got membersData:', membersData);
+      console.log('✅ [OrgSettingsPage] Got rolesData:', rolesData);
       setMembers(membersData);
       setRoles(rolesData);
     } catch (err: any) {
-      console.error(err);
+      console.error('❌ [OrgSettingsPage] Error:', err);
       setLoadError("Failed to load organization data.");
     } finally {
       setIsLoading(false);

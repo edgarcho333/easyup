@@ -1,26 +1,67 @@
-
-import { mockDb } from '../lib/mockDb';
-import { CurrentUser } from '../types';
+import { supabase } from '../lib/supabase';
 
 export const userService = {
   async updateProfile(userId: string, data: { full_name?: string; avatar_url?: string }): Promise<void> {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    mockDb.update('users', userId, data);
+    const { error } = await supabase
+      .from('users')
+      .update(data)
+      .eq('id', userId);
+
+    if (error) {
+      console.error('Error updating profile:', error);
+      throw error;
+    }
   },
 
-  async changePassword(userId: string, oldPass: string, newPass: string): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    // In a real app, we would verify oldPass hash here
-    if (newPass.length < 8) throw new Error("Password must be at least 8 characters");
-    // Mock update
-    mockDb.update('users', userId, { password_hash: 'new_mock_hash' });
+  async changePassword(oldPass: string, newPass: string): Promise<void> {
+    if (newPass.length < 8) {
+      throw new Error('Password must be at least 8 characters');
+    }
+
+    const { error } = await supabase.auth.updateUser({
+      password: newPass
+    });
+
+    if (error) {
+      console.error('Error changing password:', error);
+      throw error;
+    }
   },
 
   async updatePreferences(userId: string, prefs: any): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    // In a real app, this would update a preferences column or table
-    console.log('Preferences updated for', userId, prefs);
+    // Update user metadata in Supabase Auth
+    const { error } = await supabase.auth.updateUser({
+      data: { preferences: prefs }
+    });
+
+    if (error) {
+      console.error('Error updating preferences:', error);
+      throw error;
+    }
+  },
+
+  async uploadAvatar(userId: string, file: File): Promise<string> {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${userId}/avatar.${fileExt}`;
+
+    // Upload to storage
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(fileName, file, { upsert: true });
+
+    if (uploadError) {
+      console.error('Error uploading avatar:', uploadError);
+      throw uploadError;
+    }
+
+    // Get public URL
+    const { data } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(fileName);
+
+    // Update user profile
+    await this.updateProfile(userId, { avatar_url: data.publicUrl });
+
+    return data.publicUrl;
   }
 };
