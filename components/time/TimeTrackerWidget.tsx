@@ -55,7 +55,7 @@ export const TimeTrackerWidget: React.FC = () => {
         const loadData = async () => {
             try {
                 const [pData, tData] = await Promise.all([
-                    projectService.getProjects(user.currentOrganization!.id, 'active'),
+                    projectService.getProjects(user.currentOrganization!.id, user.id, user.currentRole || 'client', 'active'),
                     taskService.getUserTasks(user.id)
                 ]);
                 setProjects(pData);

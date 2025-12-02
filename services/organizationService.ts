@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
-import { Invitation, Role, TeamMember, Organization } from '../types';
+import { Invitation, Role, TeamMember, Organization, Project } from '../types';
+import { generateInviteToken, getExpiryDate } from '../lib/mockDb';
 
 export const organizationService = {
   async getTeamMembers(organizationId: string): Promise<TeamMember[]> {
@@ -122,7 +123,14 @@ export const organizationService = {
     return (data || []) as Role[];
   },
 
-  async inviteMember(email: string, roleId: string, organizationId: string, invitedBy: string, personalMessage?: string): Promise<void> {
+  async inviteMember(
+    email: string,
+    roleId: string,
+    organizationId: string,
+    invitedBy: string,
+    personalMessage?: string,
+    projectId?: string
+  ): Promise<{ token: string; inviteLink: string }> {
     // Check if user is already a member
     const { data: existingUser } = await supabase
       .from('users')
@@ -156,15 +164,22 @@ export const organizationService = {
       throw new Error('User has already been invited');
     }
 
-    // Create invitation
+    // Generate unique token
+    const token = generateInviteToken();
+    const expiresAt = getExpiryDate(7); // 7 days expiry
+
+    // Create invitation with token
     const { error } = await supabase
       .from('invitations')
       .insert({
         email,
         organization_id: organizationId,
+        project_id: projectId || null,
         role_id: roleId,
         invited_by: invitedBy,
         personal_message: personalMessage || null,
+        token,
+        expires_at: expiresAt,
         status: 'pending'
       });
 
@@ -172,6 +187,151 @@ export const organizationService = {
       console.error('Error creating invitation:', error);
       throw error;
     }
+
+    // Generate invite link
+    const baseUrl = window.location.origin;
+    const inviteLink = `${baseUrl}/#/invite/${token}`;
+
+    return { token, inviteLink };
+  },
+
+  async getInvitationByToken(token: string): Promise<Invitation | null> {
+    console.log('🔵 [getInvitationByToken] Looking for token:', token);
+
+    const { data, error } = await supabase
+      .from('invitations')
+      .select(`
+        *,
+        organization:organizations(id, name, owner_id, created_at, settings),
+        project:projects(id, name, client_name),
+        role:roles(id, name, display_name)
+      `)
+      .eq('token', token)
+      .single();
+
+    console.log('🔵 [getInvitationByToken] Result:', { data, error });
+
+    if (error || !data) {
+      console.error('❌ [getInvitationByToken] Error or no data:', error);
+      return null;
+    }
+
+    // Check if expired
+    if (new Date(data.expires_at) < new Date()) {
+      // Update status to expired
+      await supabase
+        .from('invitations')
+        .update({ status: 'expired' })
+        .eq('id', data.id);
+      return null;
+    }
+
+    // Check if already accepted or cancelled
+    if (data.status !== 'pending') {
+      return null;
+    }
+
+    // Fetch inviter info
+    let inviter;
+    if (data.invited_by) {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('id, email, full_name, avatar_url')
+        .eq('id', data.invited_by)
+        .maybeSingle();
+      inviter = userData || undefined;
+    }
+
+    return {
+      ...data,
+      inviter
+    } as Invitation;
+  },
+
+  async acceptInvitationByToken(token: string, userId: string): Promise<void> {
+    console.log('🔵 [acceptInvitationByToken] Starting...', { token, userId });
+
+    // Get invitation details
+    const invitation = await this.getInvitationByToken(token);
+    console.log('🔵 [acceptInvitationByToken] Invitation:', invitation);
+
+    if (!invitation) {
+      console.error('❌ [acceptInvitationByToken] Invitation not found');
+      throw new Error('Invitation not found or expired');
+    }
+
+    // Create organization membership
+    console.log('🔵 [acceptInvitationByToken] Creating membership...', {
+      user_id: userId,
+      organization_id: invitation.organization_id,
+      role_id: invitation.role_id
+    });
+
+    const { error: memError } = await supabase
+      .from('user_organizations')
+      .insert({
+        user_id: userId,
+        organization_id: invitation.organization_id,
+        role_id: invitation.role_id,
+        status: 'active',
+        invited_by: invitation.invited_by,
+        joined_at: new Date().toISOString()
+      });
+
+    if (memError) {
+      console.error('❌ [acceptInvitationByToken] Error creating membership:', memError);
+      throw memError;
+    }
+    console.log('✅ [acceptInvitationByToken] Membership created');
+
+    // If project_id exists, also add to project
+    if (invitation.project_id) {
+      console.log('🔵 [acceptInvitationByToken] Adding to project:', invitation.project_id);
+      const { error: projMemError } = await supabase
+        .from('project_members')
+        .insert({
+          project_id: invitation.project_id,
+          user_id: userId,
+          role_id: invitation.role_id,
+          is_lead: false,
+          added_at: new Date().toISOString()
+        });
+
+      if (projMemError) {
+        console.error('❌ [acceptInvitationByToken] Error adding to project:', projMemError);
+        // Don't throw - org membership was successful
+      } else {
+        console.log('✅ [acceptInvitationByToken] Added to project');
+      }
+    }
+
+    // Update invitation status
+    console.log('🔵 [acceptInvitationByToken] Updating invitation status...');
+    const { error: updateError } = await supabase
+      .from('invitations')
+      .update({ status: 'accepted' })
+      .eq('id', invitation.id);
+
+    if (updateError) {
+      console.error('❌ [acceptInvitationByToken] Error updating invitation:', updateError);
+    } else {
+      console.log('✅ [acceptInvitationByToken] Invitation accepted successfully');
+    }
+  },
+
+  async getOrganizationProjects(organizationId: string): Promise<Project[]> {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('id, name, client_name, status')
+      .eq('organization_id', organizationId)
+      .neq('status', 'archived');
+
+    if (error) {
+      console.error('Error fetching organization projects:', error);
+      return [];
+    }
+
+    return data as Project[];
   },
 
   async updateMemberRole(membershipId: string, newRoleId: string): Promise<void> {
@@ -311,6 +471,8 @@ export const organizationService = {
   },
 
   async acceptInvitation(invitationId: string, userId: string): Promise<void> {
+    console.log('🔵 [acceptInvitation] Starting...', { invitationId, userId });
+
     // Get invitation details
     const { data: invite, error: invError } = await supabase
       .from('invitations')
@@ -318,30 +480,82 @@ export const organizationService = {
       .eq('id', invitationId)
       .single();
 
+    console.log('🔵 [acceptInvitation] Invitation:', invite, invError);
+
     if (invError || !invite) {
       throw new Error('Invitation not found');
     }
 
-    // Create membership
-    const { error: memError } = await supabase
+    // Check if user is already a member
+    const { data: existingMembership } = await supabase
       .from('user_organizations')
-      .insert({
-        user_id: userId,
-        organization_id: invite.organization_id,
-        role_id: invite.role_id,
-        status: 'active',
-        joined_at: new Date().toISOString()
-      });
+      .select('id')
+      .eq('user_id', userId)
+      .eq('organization_id', invite.organization_id)
+      .maybeSingle();
 
-    if (memError) {
-      console.error('Error creating membership:', memError);
-      throw memError;
+    if (existingMembership) {
+      console.log('⚠️ [acceptInvitation] User already a member, skipping membership creation');
+    } else {
+      // Create membership
+      console.log('🔵 [acceptInvitation] Creating membership...');
+      const { error: memError } = await supabase
+        .from('user_organizations')
+        .insert({
+          user_id: userId,
+          organization_id: invite.organization_id,
+          role_id: invite.role_id,
+          status: 'active',
+          invited_by: invite.invited_by,
+          joined_at: new Date().toISOString()
+        });
+
+      if (memError) {
+        console.error('❌ [acceptInvitation] Error creating membership:', memError);
+        throw memError;
+      }
+      console.log('✅ [acceptInvitation] Membership created');
+    }
+
+    // If project_id exists, also add to project
+    if (invite.project_id) {
+      // Check if already a project member
+      const { data: existingProjectMember } = await supabase
+        .from('project_members')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('project_id', invite.project_id)
+        .maybeSingle();
+
+      if (existingProjectMember) {
+        console.log('⚠️ [acceptInvitation] User already in project, skipping');
+      } else {
+        console.log('🔵 [acceptInvitation] Adding to project:', invite.project_id);
+        const { error: projMemError } = await supabase
+          .from('project_members')
+          .insert({
+            project_id: invite.project_id,
+            user_id: userId,
+            role_id: invite.role_id,
+            is_lead: false,
+            added_at: new Date().toISOString()
+          });
+
+        if (projMemError) {
+          console.error('❌ [acceptInvitation] Error adding to project:', projMemError);
+        } else {
+          console.log('✅ [acceptInvitation] Added to project');
+        }
+      }
     }
 
     // Update invitation status
+    console.log('🔵 [acceptInvitation] Updating invitation status...');
     await supabase
       .from('invitations')
       .update({ status: 'accepted' })
       .eq('id', invitationId);
+
+    console.log('✅ [acceptInvitation] Invitation accepted');
   }
 };

@@ -47,7 +47,11 @@ export const ProjectsPage: React.FC = () => {
     setError(null);
     
     try {
-      const data = await projectService.getProjects(user.currentOrganization.id);
+      const data = await projectService.getProjects(
+        user.currentOrganization.id,
+        user.id,
+        user.currentRole || 'client'
+      );
       setProjects(data);
     } catch (err: any) {
       console.error(err);

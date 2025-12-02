@@ -48,17 +48,22 @@ export interface UserOrganization {
   role?: Role;
 }
 
-// SIMPLIFIED INVITATION - Email Only
+// INVITATION - Email with token-based acceptance
 export interface Invitation {
   id: string;
   email: string;
   organization_id: string;
+  project_id?: string; // Optional: also add to specific project
   role_id: string;
   invited_by: string;
-  status: 'pending' | 'accepted' | 'cancelled';
+  status: 'pending' | 'accepted' | 'cancelled' | 'expired';
   personal_message?: string;
+  token: string; // Unique token for invite link
+  expires_at: string; // ISO date string
   created_at: string;
+  // Virtual fields
   organization?: Organization;
+  project?: Project;
   role?: Role;
   inviter?: User;
 }

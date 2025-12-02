@@ -3,25 +3,71 @@ import { Project, ProjectMember, ProjectStatus } from '../types';
 import { notificationService } from './notificationService';
 
 export const projectService = {
-  async getProjects(organizationId: string, statusFilter?: ProjectStatus): Promise<Project[]> {
+  async getProjects(organizationId: string, userId: string, userRole: string, statusFilter?: ProjectStatus): Promise<Project[]> {
     try {
-      let query = supabase
-        .from('projects')
-        .select('*')
-        .eq('organization_id', organizationId);
+      // Admins see all projects in the organization
+      const isAdmin = ['super_admin', 'account_manager'].includes(userRole);
 
-      if (statusFilter) {
-        query = query.eq('status', statusFilter);
+      let projects: any[] = [];
+
+      if (isAdmin) {
+        // Admins see all organization projects
+        let query = supabase
+          .from('projects')
+          .select('*')
+          .eq('organization_id', organizationId);
+
+        if (statusFilter) {
+          query = query.eq('status', statusFilter);
+        }
+
+        const { data, error } = await query.order('updated_at', { ascending: false });
+
+        if (error) {
+          console.error('Failed to fetch projects:', error.message);
+          throw new Error(`Failed to fetch projects: ${error.message}`);
+        }
+
+        projects = data || [];
+      } else {
+        // Non-admins only see projects they are members of
+        const { data: memberProjects, error: memberError } = await supabase
+          .from('project_members')
+          .select('project_id')
+          .eq('user_id', userId);
+
+        if (memberError) {
+          console.error('Failed to fetch user project memberships:', memberError.message);
+          throw new Error(`Failed to fetch projects: ${memberError.message}`);
+        }
+
+        if (!memberProjects || memberProjects.length === 0) {
+          return [];
+        }
+
+        const projectIds = memberProjects.map(pm => pm.project_id);
+
+        let query = supabase
+          .from('projects')
+          .select('*')
+          .eq('organization_id', organizationId)
+          .in('id', projectIds);
+
+        if (statusFilter) {
+          query = query.eq('status', statusFilter);
+        }
+
+        const { data, error } = await query.order('updated_at', { ascending: false });
+
+        if (error) {
+          console.error('Failed to fetch projects:', error.message);
+          throw new Error(`Failed to fetch projects: ${error.message}`);
+        }
+
+        projects = data || [];
       }
 
-      const { data: projects, error } = await query.order('updated_at', { ascending: false });
-
-      if (error) {
-        console.error('Failed to fetch projects:', error.message);
-        throw new Error(`Failed to fetch projects: ${error.message}`);
-      }
-
-      if (!projects) return [];
+      if (projects.length === 0) return [];
 
       // Fetch members for each project
       const projectsWithMembers = await Promise.all(

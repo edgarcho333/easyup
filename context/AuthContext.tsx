@@ -5,8 +5,8 @@ import { authService } from '../services/authService';
 import { supabase } from '../lib/supabase';
 
 interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, fullName: string, orgName: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<string>; // Returns userId
+  register: (email: string, password: string, fullName: string, orgName: string) => Promise<string>; // Returns userId
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
@@ -114,19 +114,21 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
     switchOrg();
   }, [selectedOrgId]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<string> => {
     try {
       const currentUser = await authService.login(email, password);
       setState({ user: currentUser, isAuthenticated: true, isLoading: false });
+      return currentUser.id; // Return userId for invitation handling
     } catch (error: any) {
       throw new Error(error.message || 'Login failed');
     }
   };
 
-  const register = async (email: string, password: string, fullName: string, orgName: string) => {
+  const register = async (email: string, password: string, fullName: string, orgName: string): Promise<string> => {
     try {
       const currentUser = await authService.register(email, password, fullName, orgName);
       setState({ user: currentUser, isAuthenticated: true, isLoading: false });
+      return currentUser.id; // Return userId for invitation handling
     } catch (error: any) {
       throw new Error(error.message || 'Registration failed');
     }

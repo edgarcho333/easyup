@@ -2,36 +2,57 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { organizationService } from '../../services/organizationService';
-import { Role } from '../../types';
+import { emailService } from '../../services/emailService';
+import { Role, Project } from '../../types';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { X, Mail, Send, CheckCircle } from 'lucide-react';
+import { X, Send, CheckCircle, Copy, Check, FolderOpen } from 'lucide-react';
 
 interface InviteMemberModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  preselectedProjectId?: string; // For inviting from project page
 }
 
-export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, onClose, onSuccess }) => {
+export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
+  isOpen,
+  onClose,
+  onSuccess,
+  preselectedProjectId
+}) => {
   const { user } = useAuth();
   const [email, setEmail] = useState('');
   const [roles, setRoles] = useState<Role[]>([]);
   const [selectedRole, setSelectedRole] = useState('');
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProject, setSelectedProject] = useState<string>('');
   const [personalMessage, setPersonalMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccessStep, setIsSuccessStep] = useState(false);
+  const [inviteLink, setInviteLink] = useState('');
+  const [linkCopied, setLinkCopied] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && user?.currentOrganization) {
       loadRoles();
+      loadProjects();
       setIsSuccessStep(false);
       setEmail('');
       setPersonalMessage('');
       setError('');
+      setInviteLink('');
+      setLinkCopied(false);
+
+      // Set preselected project if provided
+      if (preselectedProjectId) {
+        setSelectedProject(preselectedProjectId);
+      } else {
+        setSelectedProject('');
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, user?.currentOrganization, preselectedProjectId]);
 
   const loadRoles = async () => {
     try {
@@ -41,6 +62,16 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, on
       if (filteredRoles.length > 0) {
         setSelectedRole(filteredRoles[0].id);
       }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const loadProjects = async () => {
+    if (!user?.currentOrganization) return;
+    try {
+      const orgProjects = await organizationService.getOrganizationProjects(user.currentOrganization.id);
+      setProjects(orgProjects);
     } catch (err) {
       console.error(err);
     }
@@ -60,21 +91,66 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, on
     setError('');
 
     try {
-      await organizationService.inviteMember(
-        email, 
-        selectedRole, 
-        user.currentOrganization.id, 
+      console.log('📧 [InviteMemberModal] Starting invitation process...');
+      console.log('📧 Email:', email);
+      console.log('📧 Role ID:', selectedRole);
+      console.log('📧 Org ID:', user.currentOrganization.id);
+      console.log('📧 Project ID:', selectedProject || 'none');
+
+      const result = await organizationService.inviteMember(
+        email,
+        selectedRole,
+        user.currentOrganization.id,
         user.id,
-        personalMessage
+        personalMessage,
+        selectedProject || undefined
       );
-      
+
+      console.log('✅ [InviteMemberModal] Invitation created:', result);
+
+      setInviteLink(result.inviteLink);
       setIsSuccessStep(true);
       onSuccess();
+
+      // Get role and project names for email
+      const selectedRoleObj = roles.find(r => r.id === selectedRole);
+      const selectedProjectObj = projects.find(p => p.id === selectedProject);
+
+      // Send invitation email via Edge Function
+      console.log('📧 [InviteMemberModal] Sending email...');
+      await emailService.sendInvitationEmail({
+        email,
+        organizationName: user.currentOrganization.name,
+        inviterName: user.full_name,
+        roleName: selectedRoleObj?.display_name || 'Team Member',
+        projectName: selectedProjectObj?.name,
+        inviteLink: result.inviteLink,
+        personalMessage: personalMessage || undefined
+      });
+      console.log('✅ [InviteMemberModal] Email sent (or logged in dev mode)');
+
     } catch (err: any) {
+      console.error('❌ [InviteMemberModal] Error:', err);
       setError(err.message || 'Failed to send invitation');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  const getSelectedProjectName = () => {
+    if (!selectedProject) return null;
+    const project = projects.find(p => p.id === selectedProject);
+    return project?.name;
   };
 
   if (!isOpen) return null;
@@ -96,14 +172,48 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, on
                 <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <h4 className="text-xl font-bold text-slate-900 dark:text-white">Invitation Sent!</h4>
+                <h4 className="text-xl font-bold text-slate-900 dark:text-white">Invitation Created!</h4>
                 <p className="text-slate-500 dark:text-slate-400 mt-2">
-                   We've sent an invitation to <strong>{email}</strong>.
+                   Invitation sent to <strong className="text-slate-700 dark:text-slate-200">{email}</strong>
                 </p>
-                <p className="text-sm text-slate-400 mt-2">
-                   They just need to register with this email to join your organization.
-                </p>
+                {getSelectedProjectName() && (
+                  <p className="text-sm text-primary-600 dark:text-primary-400 mt-1">
+                    + Access to project: {getSelectedProjectName()}
+                  </p>
+                )}
               </div>
+
+              {/* Invite Link Section */}
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 mt-4">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                  Share this link (expires in 7 days):
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={inviteLink}
+                    className="flex-1 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md px-3 py-2 text-slate-600 dark:text-slate-300"
+                  />
+                  <Button
+                    size="sm"
+                    variant={linkCopied ? "primary" : "outline"}
+                    onClick={handleCopyLink}
+                    className="shrink-0"
+                  >
+                    {linkCopied ? (
+                      <><Check className="h-4 w-4 mr-1" /> Copied!</>
+                    ) : (
+                      <><Copy className="h-4 w-4 mr-1" /> Copy</>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-400 mt-3">
+                The user will receive an email with this link. When they click it, they can register or log in to accept the invitation.
+              </p>
+
               <Button onClick={onClose} className="w-full mt-4">Done</Button>
             </div>
           ) : (
@@ -114,7 +224,7 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, on
                    <span>{error}</span>
                 </div>
               )}
-              
+
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Email Address <span className="text-red-500">*</span></label>
                 <Input
@@ -126,7 +236,6 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, on
                   autoFocus
                   className="dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                 />
-                <p className="text-xs text-slate-500 dark:text-slate-400">User will be auto-added when they register</p>
               </div>
 
               <div className="space-y-1.5">
@@ -141,6 +250,33 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, on
                     <option key={role.id} value={role.id}>{role.display_name}</option>
                   ))}
                 </select>
+              </div>
+
+              {/* Project Selection */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Add to Project <span className="text-slate-400 font-normal">(Optional)</span>
+                </label>
+                <div className="relative">
+                  <FolderOpen className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <select
+                    className="flex h-10 w-full rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 pl-10 pr-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    value={selectedProject}
+                    onChange={e => setSelectedProject(e.target.value)}
+                  >
+                    <option value="">Organization only (no project)</option>
+                    {projects.map(project => (
+                      <option key={project.id} value={project.id}>
+                        {project.name} — {project.client_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {selectedProject
+                    ? "User will be added to both the organization and this project"
+                    : "User will only be added to the organization"}
+                </p>
               </div>
 
               <div className="space-y-1.5">

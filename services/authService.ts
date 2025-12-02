@@ -69,6 +69,22 @@ export const authService = {
     const userId = authData.user.id;
     console.log('✅ User created in Supabase Auth:', userId);
 
+    // If orgName is empty, this is an invitation-based registration
+    // Don't create organization - user will be added via invitation acceptance
+    if (!orgName || orgName.trim() === '') {
+      console.log('🔵 No org name provided - invitation-based registration');
+      return {
+        id: userId,
+        email: authData.user.email!,
+        full_name: fullName,
+        avatar_url: undefined,
+        currentOrganization: null,
+        currentRole: null,
+        currentMembershipId: null,
+        organizations: [],
+      };
+    }
+
     // Create organization in Supabase
     console.log('🔵 Creating organization...', { name: orgName, owner_id: userId });
 
@@ -281,8 +297,18 @@ async function buildCurrentUser(userId: string, email: string): Promise<CurrentU
   console.log('✅ Memberships fetched:', memberships);
 
   if (!memberships || memberships.length === 0) {
-    console.error('❌ No organizations found for user');
-    throw new Error('No organizations found for user');
+    console.log('⚠️ No organizations found for user - returning user without org');
+    // Return user without organization - they may have pending invitations
+    return {
+      id: userId,
+      email,
+      full_name: fullName,
+      avatar_url: avatarUrl,
+      currentOrganization: null,
+      currentRole: null,
+      currentMembershipId: null,
+      organizations: [],
+    };
   }
 
   // Extract organizations

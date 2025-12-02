@@ -162,7 +162,7 @@ export const MyTasksPage: React.FC = () => {
       if (user?.currentOrganization) {
         const [tasksData, projectsData] = await Promise.all([
             taskService.getUserTasks(user.id),
-            projectService.getProjects(user.currentOrganization.id)
+            projectService.getProjects(user.currentOrganization.id, user.id, user.currentRole || 'client')
         ]);
         setTasks(tasksData);
         setProjects(projectsData);

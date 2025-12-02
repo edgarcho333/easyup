@@ -5,6 +5,23 @@ const STORAGE_KEY = 'easyup_mock_db_v18_full_data';
 
 export const newId = () => Math.random().toString(36).substr(2, 9) + '-' + Date.now().toString(36);
 
+// Generate secure invite token
+export const generateInviteToken = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let token = '';
+  for (let i = 0; i < 32; i++) {
+    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return token;
+};
+
+// Get date 7 days from now
+export const getExpiryDate = (days: number = 7) => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString();
+};
+
 // --- HELPER: Date Generator ---
 const daysAgo = (days: number) => {
   const date = new Date();

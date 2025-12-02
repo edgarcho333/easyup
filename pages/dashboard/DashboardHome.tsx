@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { organizationService } from '../../services/organizationService';
 import { Invitation } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
@@ -10,6 +11,7 @@ import { TrendingUp, Users, Calendar, BarChart3, Mail, Check, Loader2 } from 'lu
 
 export const DashboardHome: React.FC = () => {
   const { user, refreshProfile } = useAuth();
+  const { addToast } = useToast();
   const navigate = useNavigate();
   const [pendingInvites, setPendingInvites] = useState<Invitation[]>([]);
   const [isAccepting, setIsAccepting] = useState<string | null>(null);
@@ -36,12 +38,14 @@ export const DashboardHome: React.FC = () => {
       await organizationService.acceptInvitation(invitationId, user.id);
       // Remove from list
       setPendingInvites(prev => prev.filter(i => i.id !== invitationId));
+      addToast('Invitation accepted successfully!', 'success');
       // Refresh profile to update organization list
       await refreshProfile();
       // Reload to ensure all context is updated
       window.location.reload();
     } catch (err) {
       console.error("Failed to accept invitation", err);
+      addToast('Failed to accept invitation. Please try again.', 'error');
     } finally {
       setIsAccepting(null);
     }
