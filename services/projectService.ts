@@ -5,8 +5,9 @@ import { notificationService } from './notificationService';
 export const projectService = {
   async getProjects(organizationId: string, userId: string, userRole: string, statusFilter?: ProjectStatus): Promise<Project[]> {
     try {
-      // Admins see all projects in the organization
-      const isAdmin = ['super_admin', 'account_manager'].includes(userRole);
+      // Only super_admin sees all projects in the organization
+      // All other roles (including account_manager) only see projects they're members of
+      const isAdmin = userRole === 'super_admin';
 
       let projects: any[] = [];
 
