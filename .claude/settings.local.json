@@ -5,7 +5,9 @@
       "Bash(npm install:*)",
       "Bash(cat:*)",
       "Bash(npm run build:*)",
-      "Bash(npx supabase:*)"
+      "Bash(npx supabase:*)",
+      "Bash(curl:*)",
+      "Bash(railway:*)"
     ],
     "deny": [],
     "ask": []
