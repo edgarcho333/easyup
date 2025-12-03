@@ -162,7 +162,9 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
 
   const switchOrganization = (orgId: string) => {
     localStorage.setItem('easyup_last_org_id', orgId);
-    setSelectedOrgId(orgId);
+    // Navigate to home and refresh the page
+    window.location.href = '/#/';
+    window.location.reload();
   };
 
   const refreshProfile = async () => {

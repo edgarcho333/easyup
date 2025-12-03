@@ -7,7 +7,9 @@
       "Bash(npm run build:*)",
       "Bash(npx supabase:*)",
       "Bash(curl:*)",
-      "Bash(railway:*)"
+      "Bash(railway:*)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(npx prisma db push:*)"
     ],
     "deny": [],
     "ask": []

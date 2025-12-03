@@ -25,14 +25,45 @@ export const organizationService = {
     for (const m of (memberships || [])) {
       console.log('🔵 [organizationService] Processing membership:', m);
 
-      // Get user info
-      const { data: user, error: userError } = await supabase
+      // Get user info from users table first
+      let { data: user, error: userError } = await supabase
         .from('users')
         .select('id, email, full_name, avatar_url')
         .eq('id', m.user_id)
         .maybeSingle();
 
-      console.log('🔵 [organizationService] User result:', { user, userError });
+      console.log('🔵 [organizationService] User result from users table:', { user, userError });
+
+      // If user not in users table, try to get from current auth session
+      if (!user) {
+        console.log('⚠️ [organizationService] User not in users table, checking current session...');
+
+        // Check if this is the current logged-in user
+        const { data: sessionData } = await supabase.auth.getUser();
+
+        if (sessionData?.user && sessionData.user.id === m.user_id) {
+          user = {
+            id: sessionData.user.id,
+            email: sessionData.user.email || '',
+            full_name: sessionData.user.user_metadata?.full_name || sessionData.user.email?.split('@')[0] || 'Unknown',
+            avatar_url: sessionData.user.user_metadata?.avatar_url || null
+          };
+          console.log('✅ [organizationService] Got user from current session:', user);
+
+          // Also insert into users table for future queries
+          await supabase
+            .from('users')
+            .upsert({
+              id: user.id,
+              email: user.email,
+              full_name: user.full_name,
+              avatar_url: user.avatar_url,
+              created_at: new Date().toISOString()
+            }, { onConflict: 'id' })
+            .then(() => console.log('✅ [organizationService] User synced to users table'))
+            .catch(err => console.error('⚠️ [organizationService] Failed to sync user:', err));
+        }
+      }
 
       // Get role info
       const { data: role, error: roleError } = await supabase
@@ -50,6 +81,20 @@ export const organizationService = {
           email: user.email,
           full_name: user.full_name,
           avatar_url: user.avatar_url,
+          role: role as Role,
+          status: m.status,
+          joined_at: m.joined_at,
+          type: 'member'
+        });
+      } else if (role) {
+        // If we still don't have user info, add with minimal info
+        console.log('⚠️ [organizationService] Adding member with minimal info');
+        members.push({
+          membershipId: m.id,
+          id: m.user_id,
+          email: 'Unknown',
+          full_name: 'Unknown User',
+          avatar_url: null,
           role: role as Role,
           status: m.status,
           joined_at: m.joined_at,
@@ -371,6 +416,8 @@ export const organizationService = {
   },
 
   async createOrganization(name: string, ownerId: string): Promise<string> {
+    console.log('🔵 [createOrganization] Starting...', { name, ownerId });
+
     // Create organization
     const { data: org, error: orgError } = await supabase
       .from('organizations')
@@ -383,29 +430,40 @@ export const organizationService = {
       .single();
 
     if (orgError || !org) {
-      console.error('Error creating organization:', orgError);
+      console.error('❌ [createOrganization] Error creating organization:', orgError);
       throw new Error('Failed to create organization');
     }
+    console.log('✅ [createOrganization] Organization created:', org.id);
 
     // Get super_admin role
-    const { data: superAdminRole } = await supabase
+    const { data: superAdminRole, error: roleError } = await supabase
       .from('roles')
       .select('id')
       .eq('name', 'super_admin')
       .single();
 
-    if (superAdminRole) {
-      // Add owner as super_admin
-      await supabase
-        .from('user_organizations')
-        .insert({
-          user_id: ownerId,
-          organization_id: org.id,
-          role_id: superAdminRole.id,
-          status: 'active',
-          joined_at: new Date().toISOString()
-        });
+    if (roleError || !superAdminRole) {
+      console.error('❌ [createOrganization] super_admin role not found:', roleError);
+      throw new Error('Super admin role not found');
     }
+    console.log('✅ [createOrganization] super_admin role found:', superAdminRole.id);
+
+    // Add owner as super_admin
+    const { error: membershipError } = await supabase
+      .from('user_organizations')
+      .insert({
+        user_id: ownerId,
+        organization_id: org.id,
+        role_id: superAdminRole.id,
+        status: 'active',
+        joined_at: new Date().toISOString()
+      });
+
+    if (membershipError) {
+      console.error('❌ [createOrganization] Error creating membership:', membershipError);
+      throw new Error('Failed to add owner to organization');
+    }
+    console.log('✅ [createOrganization] Owner added as super_admin');
 
     return org.id;
   },

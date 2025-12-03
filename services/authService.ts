@@ -69,6 +69,25 @@ export const authService = {
     const userId = authData.user.id;
     console.log('✅ User created in Supabase Auth:', userId);
 
+    // Add user to users table for profile info
+    console.log('🔵 Adding user to users table...');
+    const { error: userInsertError } = await supabase
+      .from('users')
+      .insert({
+        id: userId,
+        email: email,
+        full_name: fullName,
+        avatar_url: null,
+        created_at: new Date().toISOString()
+      });
+
+    if (userInsertError) {
+      console.error('⚠️ Error adding user to users table:', userInsertError);
+      // Don't throw - this might fail if user already exists or trigger handles it
+    } else {
+      console.log('✅ User added to users table');
+    }
+
     // If orgName is empty, this is an invitation-based registration
     // Don't create organization - user will be added via invitation acceptance
     if (!orgName || orgName.trim() === '') {
