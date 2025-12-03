@@ -36,16 +36,23 @@ export const DashboardHome: React.FC = () => {
     setIsAccepting(invitationId);
     try {
       await organizationService.acceptInvitation(invitationId, user.id);
-      // Remove from list
+      // Remove from list immediately (optimistic update)
       setPendingInvites(prev => prev.filter(i => i.id !== invitationId));
       addToast('Invitation accepted successfully!', 'success');
       // Refresh profile to update organization list
       await refreshProfile();
+      // Small delay to ensure Supabase update is propagated before reload
+      await new Promise(resolve => setTimeout(resolve, 500));
       // Reload to ensure all context is updated
       window.location.reload();
     } catch (err) {
       console.error("Failed to accept invitation", err);
       addToast('Failed to accept invitation. Please try again.', 'error');
+      // Refresh the list in case of error to show actual state
+      if (user?.email) {
+        const invites = await organizationService.getUserInvitations(user.email);
+        setPendingInvites(invites);
+      }
     } finally {
       setIsAccepting(null);
     }

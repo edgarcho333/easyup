@@ -609,10 +609,15 @@ export const organizationService = {
 
     // Update invitation status
     console.log('🔵 [acceptInvitation] Updating invitation status...');
-    await supabase
+    const { error: updateError } = await supabase
       .from('invitations')
       .update({ status: 'accepted' })
       .eq('id', invitationId);
+
+    if (updateError) {
+      console.error('❌ [acceptInvitation] Error updating invitation status:', updateError);
+      throw new Error('Failed to update invitation status');
+    }
 
     console.log('✅ [acceptInvitation] Invitation accepted');
   }
