@@ -311,6 +311,41 @@ export const MyTasksPage: React.FC = () => {
   const pendingCount = overdue.length + today.length + upcoming.length + noDate.length;
   const progressPercent = tasks.length > 0 ? Math.round((tasks.filter(t => t.status === 'done').length / tasks.length) * 100) : 0;
 
+  // Tab counts - calculate based on all tasks, not filtered
+  const getTabCounts = () => {
+    const todayDate = new Date();
+    todayDate.setHours(0,0,0,0);
+
+    let allCount = 0;
+    let todayCount = 0;
+    let upcomingCount = 0;
+    let completedCount = 0;
+
+    tasks.forEach(task => {
+      if (task.status === 'done') {
+        completedCount++;
+        return;
+      }
+
+      allCount++;
+
+      if (task.due_date) {
+        const due = new Date(task.due_date);
+        due.setHours(0,0,0,0);
+
+        if (due.getTime() <= todayDate.getTime()) {
+          todayCount++;
+        } else {
+          upcomingCount++;
+        }
+      }
+    });
+
+    return { all: allCount, today: todayCount, upcoming: upcomingCount, completed: completedCount };
+  };
+
+  const tabCounts = getTabCounts();
+
   if (isLoading && tasks.length === 0) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary-600" /></div>;
 
   return (
@@ -335,12 +370,18 @@ export const MyTasksPage: React.FC = () => {
                     type="button"
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all capitalize
-                        ${activeTab === tab 
-                            ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm ring-1 ring-black/5 dark:ring-white/5' 
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all capitalize flex items-center gap-2
+                        ${activeTab === tab
+                            ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm ring-1 ring-black/5 dark:ring-white/5'
                             : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-slate-700/50'}`}
                 >
                     {tab}
+                    <span className={`min-w-[20px] h-5 px-1.5 rounded-full text-xs font-bold flex items-center justify-center
+                        ${activeTab === tab
+                            ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300'
+                            : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}`}>
+                        {tabCounts[tab]}
+                    </span>
                 </button>
             ))}
         </div>
