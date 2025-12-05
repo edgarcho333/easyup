@@ -90,7 +90,12 @@ export const ContentCalendar: React.FC<ContentCalendarProps> = ({ ideas, onIdeaC
 
   const getIdeasForDate = (date: Date) => {
     const dateString = date.toISOString().split('T')[0];
-    return ideas.filter(i => i.planned_post_date === dateString);
+    return ideas.filter(i => {
+      if (!i.planned_post_date) return false;
+      // Handle both date-only (2025-12-05) and ISO datetime (2025-12-05T14:30:00.000Z) formats
+      const ideaDate = i.planned_post_date.split('T')[0];
+      return ideaDate === dateString;
+    });
   };
 
   const getPlatformIcon = (platform: Platform) => {

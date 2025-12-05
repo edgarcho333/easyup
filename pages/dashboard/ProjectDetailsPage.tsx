@@ -5,13 +5,15 @@ import { projectService } from '../../services/projectService';
 import { taskService } from '../../services/taskService';
 import { ideaService } from '../../services/ideaService';
 import { budgetService } from '../../services/budgetService';
-import { Project, Task, Idea, ProjectBudget } from '../../types';
-import { 
-  Loader2, ArrowLeft, Settings, Users, Lightbulb, ArrowRight, 
-  CheckSquare, Plus, DollarSign, Layout, Calendar, User, 
-  Activity, MessageSquare, Target, Briefcase, Zap, 
+import { Project, Task, Idea, ProjectBudget, Role } from '../../types';
+import { organizationService } from '../../services/organizationService';
+import {
+  Loader2, ArrowLeft, Settings, Users, Lightbulb, ArrowRight,
+  CheckSquare, Plus, DollarSign, Layout, Calendar, User,
+  Activity, MessageSquare, Target, Briefcase, Zap,
   GanttChart, BarChart2, LineChart, Bell, PieChart,
-  TrendingUp, AlertCircle, CheckCircle2, Clock, Layers, FileText, AlertTriangle
+  TrendingUp, AlertCircle, CheckCircle2, Clock, Layers, FileText, AlertTriangle,
+  Trash2, MoreVertical
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
@@ -67,11 +69,31 @@ export const ProjectDetailsPage: React.FC = () => {
   // Add Member Modal State
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
 
+  // Team Management State
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [teamActionError, setTeamActionError] = useState('');
+
+  // Check if current user can manage team
+  const canManageTeam = user?.currentRole === 'super_admin' || user?.currentRole === 'account_manager';
+
   useEffect(() => {
     if (id) {
       fetchProjectDetails(id);
     }
   }, [id, taskRefreshTrigger]);
+
+  useEffect(() => {
+    // Fetch roles for the dropdown
+    const fetchRoles = async () => {
+      try {
+        const rolesData = await organizationService.getRoles();
+        setRoles(rolesData);
+      } catch (err) {
+        console.error('Failed to fetch roles:', err);
+      }
+    };
+    fetchRoles();
+  }, []);
 
   const fetchProjectDetails = async (projectId: string) => {
     try {
@@ -602,31 +624,115 @@ export const ProjectDetailsPage: React.FC = () => {
 
             {activeTab === 'team' && (
                <div className="space-y-4">
-                 <div className="flex justify-between items-center">
+                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                      Project Team ({project.members?.length || 0})
                    </h3>
-                   <Button onClick={() => setIsAddMemberModalOpen(true)}>
-                     <Plus className="h-4 w-4 mr-2" />
-                     Add Member
-                   </Button>
+                   {canManageTeam && (
+                     <Button onClick={() => setIsAddMemberModalOpen(true)}>
+                       <Plus className="h-4 w-4 mr-2" />
+                       Add Member
+                     </Button>
+                   )}
                  </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                   {project.members?.map(member => (
-                     <div key={member.id} className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center gap-4 hover:shadow-md transition-shadow group">
-                       <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/50 dark:to-primary-800/50 flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold text-lg group-hover:scale-110 transition-transform border-2 border-white dark:border-slate-800 shadow-sm">
-                         {member.user?.full_name?.[0] || 'U'}
+
+                 {teamActionError && (
+                   <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-lg flex items-center justify-between border border-red-100 dark:border-red-800">
+                     <span className="text-sm">{teamActionError}</span>
+                     <button onClick={() => setTeamActionError('')} className="text-red-400 hover:text-red-600">
+                       <AlertCircle className="h-4 w-4" />
+                     </button>
+                   </div>
+                 )}
+
+                 <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                   <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                     {project.members?.length === 0 ? (
+                       <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+                         No team members yet. Add your first member!
                        </div>
-                       <div>
-                         <p className="font-bold text-slate-900 dark:text-white">{member.user?.full_name || 'Unknown'}</p>
-                         <p className="text-sm text-slate-500 dark:text-slate-400 capitalize">{member.role?.display_name}</p>
-                         <div className="flex items-center gap-1.5 mt-1.5">
-                            <div className={`w-1.5 h-1.5 rounded-full ${member.user ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
-                            <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">{member.user ? 'Active' : 'Pending'}</span>
-                         </div>
-                       </div>
-                     </div>
-                   ))}
+                     ) : (
+                       project.members?.map(member => {
+                         const isCurrentUser = member.user_id === user?.id;
+                         const isProjectCreator = project.created_by === member.user_id;
+
+                         return (
+                           <div key={member.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                             <div className="flex items-center gap-4">
+                               <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/50 dark:to-primary-800/50 flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold text-lg border-2 border-white dark:border-slate-800 shadow-sm shrink-0">
+                                 {member.user?.full_name?.[0] || 'U'}
+                               </div>
+                               <div>
+                                 <div className="flex items-center gap-2">
+                                   <p className="font-bold text-slate-900 dark:text-white">{member.user?.full_name || 'Unknown'}</p>
+                                   {isCurrentUser && (
+                                     <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 font-medium">YOU</span>
+                                   )}
+                                   {isProjectCreator && (
+                                     <span className="text-[10px] bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800 font-medium">CREATOR</span>
+                                   )}
+                                 </div>
+                                 <p className="text-sm text-slate-500 dark:text-slate-400">{member.user?.email}</p>
+                                 <div className="flex items-center gap-1.5 mt-1">
+                                   <div className={`w-1.5 h-1.5 rounded-full ${member.user ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'}`}></div>
+                                   <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+                                     {member.user ? 'Active' : 'Pending'} · Joined {new Date(member.added_at || '').toLocaleDateString()}
+                                   </span>
+                                 </div>
+                               </div>
+                             </div>
+
+                             <div className="flex items-center gap-3 pl-16 sm:pl-0">
+                               {/* Role Selector */}
+                               {canManageTeam && !isCurrentUser ? (
+                                 <select
+                                   value={member.role_id}
+                                   onChange={async (e) => {
+                                     try {
+                                       setTeamActionError('');
+                                       await projectService.updateProjectMemberRole(member.id, e.target.value);
+                                       fetchProjectDetails(project.id);
+                                     } catch (err: any) {
+                                       setTeamActionError(err.message || 'Failed to update role');
+                                     }
+                                   }}
+                                   className="text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 font-medium text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 focus:ring-2 focus:ring-primary-500 focus:outline-none"
+                                 >
+                                   {roles.map(r => (
+                                     <option key={r.id} value={r.id}>{r.display_name}</option>
+                                   ))}
+                                 </select>
+                               ) : (
+                                 <span className="text-sm font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700">
+                                   {member.role?.display_name}
+                                 </span>
+                               )}
+
+                               {/* Remove Button */}
+                               {canManageTeam && !isCurrentUser && !isProjectCreator && (
+                                 <button
+                                   onClick={async () => {
+                                     if (!window.confirm(`Remove ${member.user?.full_name || 'this member'} from the project?`)) return;
+                                     try {
+                                       setTeamActionError('');
+                                       await projectService.removeProjectMember(member.id);
+                                       fetchProjectDetails(project.id);
+                                     } catch (err: any) {
+                                       setTeamActionError(err.message || 'Failed to remove member');
+                                     }
+                                   }}
+                                   className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                   title="Remove from project"
+                                 >
+                                   <Trash2 className="h-4 w-4" />
+                                 </button>
+                               )}
+                             </div>
+                           </div>
+                         );
+                       })
+                     )}
+                   </div>
                  </div>
                </div>
             )}

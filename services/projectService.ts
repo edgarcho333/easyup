@@ -323,5 +323,39 @@ export const projectService = {
       console.error('Error in archiveProject:', err);
       throw err;
     }
+  },
+
+  async updateProjectMemberRole(memberId: string, newRoleId: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('project_members')
+        .update({ role_id: newRoleId })
+        .eq('id', memberId);
+
+      if (error) {
+        console.error('Failed to update project member role:', error.message);
+        throw new Error(`Failed to update role: ${error.message}`);
+      }
+    } catch (err) {
+      console.error('Error in updateProjectMemberRole:', err);
+      throw err;
+    }
+  },
+
+  async removeProjectMember(memberId: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('project_members')
+        .delete()
+        .eq('id', memberId);
+
+      if (error) {
+        console.error('Failed to remove project member:', error.message);
+        throw new Error(`Failed to remove member: ${error.message}`);
+      }
+    } catch (err) {
+      console.error('Error in removeProjectMember:', err);
+      throw err;
+    }
   }
 };
