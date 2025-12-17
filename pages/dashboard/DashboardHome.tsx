@@ -191,7 +191,7 @@ export const DashboardHome: React.FC = () => {
         {isLoading ? (
           Array.from({ length: 4 }).map((_, index) => (
             <Card key={index} className="dark:bg-slate-800 dark:border-slate-700 animate-pulse">
-              <CardContent className="p-6">
+              <CardContent className="p-6 pt-6">
                 <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-24 mb-4"></div>
                 <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-16 mb-2"></div>
                 <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-20"></div>
@@ -203,7 +203,7 @@ export const DashboardHome: React.FC = () => {
             const Icon = stat.icon;
             return (
               <Card key={index} className="dark:bg-slate-800 dark:border-slate-700">
-                <CardContent className="p-6">
+                <CardContent className="p-6 pt-6">
                   <div className="flex items-center justify-between space-y-0 pb-2">
                     <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{stat.title}</p>
                     <Icon className={`h-4 w-4 ${stat.color}`} />

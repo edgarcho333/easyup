@@ -135,7 +135,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'EASYUP <onboarding@resend.dev>', // Test domain from Resend
+        from: 'EASYUP <noreply@easyup.ge>',
         to: [email],
         subject: `${inviterName} invited you to join ${organizationName} on EASYUP`,
         html: emailHtml,
